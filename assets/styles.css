@@ -5161,32 +5161,82 @@ body {
 /* dots */
 .offer-dots {
     display: flex;
+    align-items: center;
     justify-content: center;
-    gap: 9px;
-    margin-top: 36px;
+    gap: 8px;
+    margin-top: 32px;
     position: relative;
     z-index: 2;
 }
 
 .offer-dot {
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    background: rgba(232, 93, 117, .3);
-    border: none;
-    cursor: pointer;
+    width: 7px;
+    height: 7px;
     padding: 0;
-    transition: background .25s ease, transform .25s ease;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(232, 93, 117, 0.22);
+    cursor: pointer;
+    position: relative;
+    transition:
+        width 0.35s cubic-bezier(.4, 0, .2, 1),
+        background 0.35s ease,
+        transform 0.35s cubic-bezier(.4, 0, .2, 1),
+        box-shadow 0.35s ease;
 }
 
+/* Larger invisible touch area */
+.offer-dot::before {
+    content: "";
+    position: absolute;
+    inset: -9px;
+}
+
+/* Hover */
+.offer-dot:hover {
+    background: rgba(232, 93, 117, 0.5);
+    transform: scale(1.15);
+}
+
+/* Active dot */
 .offer-dot.is-active {
+    width: 24px;
+    height: 7px;
+    border-radius: 999px;
     background: var(--rose);
-    transform: scale(1.25);
+    transform: none;
+    box-shadow: 0 3px 10px rgba(232, 93, 117, 0.25);
 }
 
-@media (max-width:640px) {
+/* Subtle active glow */
+.offer-dot.is-active::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: rgba(255, 255, 255, 0.22);
+    opacity: 0.8;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
     .offer-slide {
         min-height: 380px;
+    }
+
+    .offer-dots {
+        gap: 7px;
+        margin-top: 26px;
+    }
+
+    .offer-dot {
+        width: 6px;
+        height: 6px;
+    }
+
+    .offer-dot.is-active {
+        width: 21px;
+        height: 6px;
     }
 }
 
