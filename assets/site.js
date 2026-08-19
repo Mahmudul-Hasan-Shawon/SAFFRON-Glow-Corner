@@ -649,7 +649,7 @@ function renderRelated(p) {
 
 var DESC_SECTIONS = [
     { keys: ["for", "suitable for"],                              type: "pills", label: "For",          icon: "fa-solid fa-user-check" },
-    { keys: ["ingredients", "key ingredients"],                   type: "pills", label: "Ingredients",  icon: "fa-solid fa-leaf" },
+    { keys: ["ingredients", "key ingredients"],                   type: "list", label: "Ingredients",  icon: "fa-solid fa-leaf" },
     { keys: ["benefits", "key benefits"],                         type: "list",  label: "Benefits",     icon: "fa-solid fa-star" },
     { keys: ["key features", "features", "highlights"],           type: "list",  label: "Key Features", icon: "fa-solid fa-wand-magic-sparkles" },
     { keys: ["how to use", "usage", "directions", "how to apply"],type: "steps", label: "How to Use",   icon: "fa-solid fa-hand-sparkles" },
