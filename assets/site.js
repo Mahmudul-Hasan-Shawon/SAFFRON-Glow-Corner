@@ -3,10 +3,19 @@
    overwrote the browser's global URL constructor for the whole
    page — a landmine for any library added later.
    ============================================================== */
-var API_URL = "https://script.google.com/macros/s/AKfycbyuP2uplc3WsVlV2A9BaXkUSFwi0yQxCNRH-_xwNUEryp_gXN7cpmtfO51lxRGxbxcx/exec";
+var API_URL = "https://script.google.com/macros/s/AKfycbxriqOAO51MW3ekmUhGZ6TWvEqgn9a7wYV6JxU5tvdkiu04VnLvlzRfi6B9JApXUXqLrg/exec";
 
 var ALL = [], FILTERED = [], CFG = { totalProducts: 13 },
-    ACTIVE_CAT = "All", SEARCH = "", MOD_PROD = null, MOD_QTY = 1, LAST_ORDER = null;
+    ACTIVE_CAT = "All", SEARCH = "", LAST_ORDER = null;
+
+/* Product details view state (replaces the old quick-view modal). */
+var PP_PROD = null, PP_QTY = 1, HOME_SCROLL = 0, PAGE_TITLE = document.title;
+
+/* Offer slides pulled from the 🎁 Offers sheet.
+   null  → sheet not created yet: keep the slides hard-coded in the HTML.
+   []    → sheet exists but nothing is Active: hide the whole section.
+   [...] → build the slider from the sheet. */
+var OFFERS = null;
 
 /* localStorage can throw (private mode, blocked storage) and a
    corrupted value used to kill the whole script at parse time,
@@ -21,9 +30,11 @@ var CART = (function () {
     } catch (e) { return []; }
 })();
 
-var LOW_STOCK_THRESHOLD = 10;
+/* Availability follows ONLY the Status column in the Products sheet
+   (p.inStock / p.stockStatus from the backend). Stock Qty is display
+   info, never the deciding factor. */
 function getStockInfo(p) {
-    if (!p.inStock || p.stockQty <= 0) {
+    if (!p.inStock) {
         return {
             cls: "out",
             label: "Out of Stock",
@@ -31,7 +42,7 @@ function getStockInfo(p) {
         };
     }
 
-    if (p.stockQty <= LOW_STOCK_THRESHOLD) {
+    if (String(p.stockStatus || "").toLowerCase().indexOf("low") !== -1) {
         return {
             cls: "low",
             label: "Low Stock",
@@ -45,6 +56,10 @@ function getStockInfo(p) {
         icon: '<i class="fa-solid fa-circle-check" style="color: #228748;"></i>'
     };
 }
+
+/* Qty cap for steppers/cart. When the sheet says In Stock with Qty 0,
+   the count is stale — allow ordering anyway instead of blocking. */
+function maxQty(p) { return (p && p.stockQty > 0) ? p.stockQty : 99; }
 
 
 
@@ -92,7 +107,7 @@ var REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* ── Background scroll lock ──────────────────────────────────
    Without this the page scrolled behind every open drawer/modal. */
-var LOCK_IDS = ["cart", "side-panel", "modal-veil", "checkout-veil", "success-veil", "track-veil", "inv-veil"];
+var LOCK_IDS = ["cart", "side-panel", "checkout-veil", "success-veil", "track-veil", "inv-veil"];
 function syncOverlayLock() {
     var open = LOCK_IDS.some(function (id) {
         var el = $(id);
@@ -201,7 +216,10 @@ function bumpCartIcon() {
 
 document.addEventListener("DOMContentLoaded", function () {
     renderBadge(); makeSparks(); initReveal(); initScrollFx();
+    buildOfferSlider();                       // hard-coded slides until sheet data arrives
+    window.addEventListener("hashchange", handleRoute);
     if ($("product-grid")) loadData();
+    if ($("gallery-grid")) initGallery();
     document.addEventListener("keydown", function (e) {
         if (e.key !== "Escape") return;
         // Close only the topmost layer so Escape doesn't nuke everything.
@@ -209,9 +227,9 @@ document.addEventListener("DOMContentLoaded", function () {
         if ($("track-veil") && $("track-veil").classList.contains("on")) { closeTrack(); return; }
         if ($("success-veil") && $("success-veil").classList.contains("on")) { closeSuccess(); return; }
         if ($("checkout-veil") && $("checkout-veil").classList.contains("on")) { closeCheckout(); return; }
-        if ($("modal-veil") && $("modal-veil").classList.contains("on")) { closeModal(); return; }
         if ($("side-panel") && $("side-panel").classList.contains("on")) { closeSidePanel(); return; }
-        if ($("cart") && $("cart").classList.contains("on")) { closeCart(); }
+        if ($("cart") && $("cart").classList.contains("on")) { closeCart(); return; }
+        if (PP_PROD) { closeProduct(); }
     });
 });
 
@@ -247,7 +265,10 @@ function loadData() {
         ALL = (d && d.products) || [];
         CFG = (d && d.config) || { totalProducts: 13 };
         if (!CFG.totalProducts || CFG.totalProducts < 1) CFG.totalProducts = 13;
+        OFFERS = (d && d.offers !== undefined) ? d.offers : null;
         applyConfig(); buildPills(); reconcileCart(); applyFilters(); hide("loading-state");
+        initOffers();
+        handleRoute();   // someone may have opened/shared a #product-N link directly
     }).catch(function (e) {
         hide("loading-state");
         $("err-msg").textContent = (e && e.message) || "Connection failed.";
@@ -262,6 +283,11 @@ function refreshProducts() {
         ALL = d;
         reconcileCart();
         applyFilters();
+        // Keep an open product page in sync with the just-updated stock.
+        if (PP_PROD) {
+            var fresh = findProduct(PP_PROD.id);
+            if (fresh) fillProductPage(fresh);
+        }
     }).catch(function () { /* non-critical */ });
 }
 
@@ -275,12 +301,12 @@ function reconcileCart() {
 
     CART = CART.filter(function (i) {
         var p = byId[i.id];
-        if (!p || !p.inStock || p.stockQty <= 0) { removed++; changed = true; return false; }
+        if (!p || !p.inStock) { removed++; changed = true; return false; }   // Status decides
         var price = p.displayPrice || p.offerPrice || p.oldPrice;
         if (i.offerPrice !== price) { i.offerPrice = price; changed = true; }
         i.title = p.title; i.brand = p.brand; i.size = p.size; i.sku = p.sku;
         i.oldPrice = p.oldPrice; i.hasDiscount = p.hasDiscount; i.imageUrl = getImg(p);
-        if (i.qty > p.stockQty) { i.qty = p.stockQty; clamped++; changed = true; }
+        if (i.qty > maxQty(p)) { i.qty = maxQty(p); clamped++; changed = true; }
         return true;
     });
 
@@ -340,11 +366,13 @@ function buildPills() {
 }
 
 function setCat(cat) {
+    if (PP_PROD) exitProductView(false);
     ACTIVE_CAT = cat;
     document.querySelectorAll(".pill").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-cat") === cat); });
     applyFilters(); updateClearFilterBtn();
 }
 function scrollToShop() {
+    if (PP_PROD) exitProductView(false);
     if ($("shop")) { $("shop").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth" }); }
     else { window.location.href = "index.html#shop"; }
 }
@@ -401,6 +429,7 @@ function openCategoryPanel() {
 }
 
 function selectBrand(brand) {
+    if (PP_PROD) exitProductView(false);
     SEARCH = String(brand).toLowerCase().trim();
     $("search-inp").value = brand;
     ACTIVE_CAT = "All";
@@ -409,7 +438,7 @@ function selectBrand(brand) {
 }
 
 function selectCategory(cat) { setCat(cat); closeSidePanel(); scrollToShop(); }
-function onSearch() { SEARCH = $("search-inp").value.toLowerCase().trim(); applyFilters(); updateClearFilterBtn(); }
+function onSearch() { if (PP_PROD) exitProductView(true); SEARCH = $("search-inp").value.toLowerCase().trim(); applyFilters(); updateClearFilterBtn(); }
 function updateClearFilterBtn() { $("search-wrap").classList.toggle("has-filter", !!SEARCH || ACTIVE_CAT !== "All"); }
 function clearFilter() { $("search-inp").value = ""; SEARCH = ""; setCat("All"); updateClearFilterBtn(); }
 
@@ -430,12 +459,19 @@ function renderGrid() {
     if (!FILTERED.length) { hide("product-grid"); show("empty-state"); return; }
     hide("empty-state"); show("product-grid");
     var h = "";
-    FILTERED.forEach(function (p, idx) {
-        var px = p.displayPrice || p.offerPrice || p.oldPrice;
-        var dis = p.inStock ? "" : "disabled";
-        var si = getStockInfo(p);
-        var delay = Math.min(idx, 11) * 55;
-        h += '<div class="card reveal" data-delay="' + delay + '" onclick="openModal(' + p.id + ')">';
+    FILTERED.forEach(function (p, idx) { h += cardHTML(p, idx); });
+    $("product-grid").innerHTML = h;
+    observeNew(Array.prototype.slice.call($("product-grid").querySelectorAll(".card")));
+}
+
+/* One product card. Shared between the main grid and the
+   "You May Also Like" strip on the product details view. */
+function cardHTML(p, idx) {
+    var px = p.displayPrice || p.offerPrice || p.oldPrice;
+    var dis = p.inStock ? "" : "disabled";
+    var si = getStockInfo(p);
+    var delay = Math.min(idx, 11) * 55;
+    var h = '<div class="card reveal" data-delay="' + delay + '" onclick="openProduct(' + p.id + ')">';
         h += '<div class="card-img"><img src="' + esc(getImg(p)) + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + IMGS.d + '\'"/>';
         h += '<div class="card-badges">';
         if (p.hasDiscount) h += '<span class="badge badge-sale">-' + p.discountPct + '%</span>';
@@ -446,9 +482,7 @@ function renderGrid() {
         if (p.hasDiscount) h += '<span class="p-old">' + fmt(p.oldPrice) + '</span>';
         h += '</div><div class="card-foot"><span class="stock-tag ' + si.cls + '">' + si.label + '</span>';
         h += '<button class="add-btn" aria-label="Add to bag" onclick="event.stopPropagation();quickAdd(' + p.id + ',this)" ' + dis + '><i class="fa-solid fa-cart-plus"></i></button></div></div></div>';
-    });
-    $("product-grid").innerHTML = h;
-    observeNew(Array.prototype.slice.call($("product-grid").querySelectorAll(".card")));
+    return h;
 }
 
 function findProduct(id) {
@@ -460,63 +494,331 @@ function findCartItem(id) {
     return null;
 }
 
-var _modalUnlockT;
+/* ═════════════════════════════════════════════════════════════
+   PRODUCT DETAILS VIEW
+   One in-page "product page" rendered instantly with JS — no
+   modal and no separate HTML file per product. The URL hash
+   (#product-12) drives it, so browser Back/Forward and shared
+   links all work, while everything stays on index.html.
+   ═════════════════════════════════════════════════════════════ */
 
-function openModal(id) {
-            MOD_PROD = findProduct(id);
-            if (!MOD_PROD) return;
-            MOD_QTY = 1;
-            var p = MOD_PROD;
-            var px = p.displayPrice || p.offerPrice || p.oldPrice;
-            $("m-img").src = getImg(p); $("m-img").alt = p.title;
-            $("m-brand").textContent = p.brand + " \xb7 " + p.category;
-            $("m-name").textContent = p.title;
-            $("m-sku").textContent = p.sku ? "SKU: " + p.sku : "";
-            $("m-desc").textContent = p.size;
-            $("m-price").textContent = fmt(px);
-            $("m-old").textContent = p.hasDiscount ? fmt(p.oldPrice) : "";
-            $("m-qty").textContent = 1;
-            var db = $("m-disc");
-            if (p.hasDiscount) { db.textContent = "-" + p.discountPct + "%"; db.classList.remove("hidden"); }
-            else { db.classList.add("hidden"); }
-            var si = getStockInfo(p);
-            var st = $("m-stock");
-            var stockText = si.cls === "out" ? "Out of Stock" : (si.label + " (" + p.stockQty + " units)");
-            var stockIconColor = si.cls === "out" ? "var(--red)" : si.cls === "low" ? "var(--amber)" : "var(--green)";
-            var stockIconClass = si.cls === "out" ? "fa-solid fa-circle-xmark" : "fa-solid fa-circle-check";
-            st.innerHTML = '<i class="' + stockIconClass + '" style="color:' + stockIconColor + ';margin-right:6px"></i>' + esc(stockText);
-            st.className = "modal-stock " + si.cls;
-            $("m-add").disabled = !p.inStock;
+function openProduct(id) {
+    var p = findProduct(id);
+    if (!p) return;
+    if (!PP_PROD) HOME_SCROLL = window.scrollY || 0;  // remember where the shopper was
+    if (location.hash === "#product-" + id) { handleRoute(); }
+    else { location.hash = "product-" + id; }         // handleRoute() fires via hashchange
+}
 
-            // Children animate in from translateY(26px); that transform counts
-            // toward this pane's scroll overflow and flashes a scrollbar. Clip
-            // until the stagger lands (.55s duration + .42s max delay).
-            var info = document.querySelector(".modal-info");
-            info.scrollTop = 0;
-            info.classList.add("locked");
-            clearTimeout(_modalUnlockT);
-            _modalUnlockT = setTimeout(function () { info.classList.remove("locked"); }, REDUCED ? 0 : 1000);
+function closeProduct() {
+    // Replace the hash instead of pushing "#shop", so Back doesn't
+    // bounce the user through a stack of product hashes.
+    exitProductView(false);
+    if (history.replaceState) history.replaceState(null, "", location.pathname + location.search + "#shop");
+    else location.hash = "shop";
+    if ($("shop")) $("shop").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth" });
+}
 
-            $("modal-veil").classList.add("on");
-            syncOverlayLock();
+function ppGoCategory() {
+    var cat = PP_PROD ? PP_PROD.category : "All";
+    closeProduct();
+    if (cat) setCat(cat);
+}
+
+/* Central router — runs on load and on every hash change. */
+function handleRoute() {
+    var m = String(location.hash || "").match(/^#product-(\d+)$/);
+    if (m) {
+        if (!ALL.length) return;              // data still loading; loadData() re-runs this
+        var p = findProduct(Number(m[1]));
+        if (p) { showProductView(p); return; }
+        showToast("Product not found", true); // stale/shared link to a removed product
+    }
+    if (PP_PROD) exitProductView(true);
+}
+
+var HOME_SECTIONS = ["hero", "offers", "shop"];
+
+function showProductView(p) {
+    var firstOpen = !PP_PROD;
+    PP_PROD = p; PP_QTY = 1;
+    fillProductPage(p);
+    HOME_SECTIONS.forEach(function (id) { var el = $(id); if (el) el.classList.add("route-hidden"); });
+    show("product-page");
+    document.title = p.title + " \u2014 " + (CFG.siteTitle || PAGE_TITLE);
+    if (firstOpen || REDUCED) window.scrollTo(0, 0);
+    else window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function exitProductView(restoreScroll) {
+    if (!PP_PROD) return;
+    PP_PROD = null;
+    hide("product-page");
+    HOME_SECTIONS.forEach(function (id) { var el = $(id); if (el) el.classList.remove("route-hidden"); });
+    initOffers();                              // re-applies "hide section" if sheet says so
+    document.title = CFG.siteTitle || PAGE_TITLE;
+    if (restoreScroll) window.scrollTo(0, HOME_SCROLL);
+}
+
+function fillProductPage(p) {
+    var px = p.displayPrice || p.offerPrice || p.oldPrice;
+    var si = getStockInfo(p);
+
+    $("pp-img").src = getImg(p); $("pp-img").alt = p.title;
+    $("pp-crumb-cat").textContent = p.category || "Products";
+    $("pp-crumb-name").textContent = trunc(p.title, 40);
+    $("pp-brand").textContent = p.brand + (p.category ? " \u00b7 " + p.category : "");
+    $("pp-name").textContent = p.title;
+    $("pp-sku").textContent = p.sku ? "SKU: " + p.sku : "";
+    $("pp-price").textContent = fmt(px);
+    $("pp-old").textContent = p.hasDiscount ? fmt(p.oldPrice) : "";
+    $("pp-qty").textContent = PP_QTY;
+
+    var db = $("pp-disc");
+    if (p.hasDiscount) { db.textContent = "-" + p.discountPct + "%"; db.classList.remove("hidden"); }
+    else { db.classList.add("hidden"); }
+
+    var stockText = si.cls === "out" ? "Out of Stock"
+        : (si.label + (p.stockQty > 0 ? " (" + p.stockQty + " units)" : ""));
+    var stockIconColor = si.cls === "out" ? "var(--red)" : si.cls === "low" ? "var(--amber)" : "var(--green)";
+    var stockIconClass = si.cls === "out" ? "fa-solid fa-circle-xmark" : "fa-solid fa-circle-check";
+    var st = $("pp-stock");
+    st.innerHTML = '<i class="' + stockIconClass + '" style="color:' + stockIconColor + ';margin-right:6px"></i>' + esc(stockText);
+    st.className = "pp-stock " + si.cls;
+    $("pp-add").disabled = !p.inStock;
+
+    // Quick facts table
+    $("pp-meta-brand").textContent = p.brand || "\u2014";
+    $("pp-meta-cat").textContent = p.category || "\u2014";
+    $("pp-meta-size").textContent = p.size || "\u2014";
+    $("pp-meta-sku").textContent = p.sku || "\u2014";
+    // $("pp-short").textContent = p.size ? p.size : "";
+
+    // Full description from the sheet's Description column, parsed into
+    // styled sections (For / Ingredients / Benefits / How to Use / FAQ ...).
+    renderDescription(p);
+
+    renderRelated(p);
+}
+
+function renderRelated(p) {
+    var wrap = $("pp-related-wrap"), grid = $("pp-related");
+    if (!wrap || !grid) return;
+    var rel = ALL.filter(function (x) { return x.id !== p.id && x.category === p.category; });
+    if (rel.length < 4) {
+        ALL.forEach(function (x) {
+            if (x.id === p.id) return;
+            if (rel.indexOf(x) !== -1) return;
+            if (x.brand === p.brand && rel.length < 4) rel.push(x);
+        });
+    }
+    if (rel.length < 4) {   // small catalogues: pad with anything else in stock
+        ALL.forEach(function (x) {
+            if (x.id === p.id) return;
+            if (rel.indexOf(x) !== -1) return;
+            if (x.inStock && rel.length < 4) rel.push(x);
+        });
+    }
+    rel = rel.slice(0, 4);
+    if (!rel.length) { wrap.classList.add("hidden"); return; }
+    wrap.classList.remove("hidden");
+    var h = "";
+    rel.forEach(function (x, i) { h += cardHTML(x, i); });
+    grid.innerHTML = h;
+    observeNew(Array.prototype.slice.call(grid.querySelectorAll(".card")));
+}
+
+/* ═════════════════════════════════════════════════════════════
+   DESCRIPTION PARSER
+   One Google Sheets cell → structured, styled sections.
+
+   Rules (all case-insensitive):
+   • Text before the first heading = intro paragraphs.
+   • A line like "Ingredients:" starts a section. Content may also sit
+     on the same line after the colon ("For: Male, Female").
+   • Known headings get special layouts:
+       For / Suitable For          → pills
+       Ingredients / Key Ingredients → pills
+       Benefits / Key Features / Features / Highlights → checklist
+       How to Use / Usage / Directions → numbered steps
+       FAQ / FAQs                  → accordion (question line, then
+                                     "Answer: ..." / "A: ..." lines)
+   • Any other short "Something:" line becomes a plain titled section.
+   • A heading with nothing under it produces NO output at all.
+   ═════════════════════════════════════════════════════════════ */
+
+var DESC_SECTIONS = [
+    { keys: ["for", "suitable for"],                              type: "pills", label: "For",          icon: "fa-solid fa-user-check" },
+    { keys: ["ingredients", "key ingredients"],                   type: "pills", label: "Ingredients",  icon: "fa-solid fa-leaf" },
+    { keys: ["benefits", "key benefits"],                         type: "list",  label: "Benefits",     icon: "fa-solid fa-star" },
+    { keys: ["key features", "features", "highlights"],           type: "list",  label: "Key Features", icon: "fa-solid fa-wand-magic-sparkles" },
+    { keys: ["how to use", "usage", "directions", "how to apply"],type: "steps", label: "How to Use",   icon: "fa-solid fa-hand-sparkles" },
+    { keys: ["faq", "faqs"],                                      type: "faq",   label: "FAQ",          icon: "fa-solid fa-circle-question" }
+];
+
+// "Ingredients:"  /  "For: Male, Female"  → { def|null, label, inline }
+function matchHeading(line) {
+    var m = line.match(/^([A-Za-z][A-Za-z /&'-]{0,40})\s*:\s*(.*)$/);
+    if (!m) return null;
+    var label = m[1].trim(), inline = m[2].trim(), low = label.toLowerCase();
+    // "Answer:" belongs to FAQ content, never starts a section.
+    if (low === "answer" || low === "a" || low === "q" || low === "question") return null;
+    for (var i = 0; i < DESC_SECTIONS.length; i++) {
+        if (DESC_SECTIONS[i].keys.indexOf(low) !== -1) {
+            return { def: DESC_SECTIONS[i], label: DESC_SECTIONS[i].label, inline: inline };
+        }
+    }
+    // Unknown heading: only treat as one when the line is JUST the label,
+    // so a sentence like "Note: shake well before use." stays a paragraph.
+    if (!inline && label.split(/\s+/).length <= 5) {
+        return { def: null, label: label, inline: "" };
+    }
+    return null;
+}
+
+function parseDescription(text) {
+    var lines = String(text || "").replace(/\r/g, "").split("\n");
+    var intro = [], sections = [], cur = null;
+
+    function pushLine(line) {
+        if (cur) cur.lines.push(line);
+        else intro.push(line);
+    }
+
+    lines.forEach(function (raw) {
+        var line = raw.trim();
+        if (!line) { pushLine(""); return; }
+        var h = matchHeading(line);
+        if (h) {
+            cur = { def: h.def, label: h.label, lines: [] };
+            sections.push(cur);
+            if (h.inline) cur.lines.push(h.inline);
+        } else {
+            pushLine(line);
+        }
+    });
+
+    // Intro → paragraphs (blank line = new paragraph)
+    var paras = [], buf = [];
+    intro.forEach(function (l) {
+        if (l === "") { if (buf.length) { paras.push(buf.join(" ")); buf = []; } }
+        else buf.push(l);
+    });
+    if (buf.length) paras.push(buf.join(" "));
+
+    // Drop sections that ended up with no real content (rule #6)
+    sections = sections.filter(function (s) {
+        return s.lines.some(function (l) { return l !== ""; });
+    });
+
+    return { intro: paras, sections: sections };
+}
+
+/* ── section renderers ─────────────────────────────────────── */
+
+function descItems(lines, splitCommas) {
+    var items = [];
+    lines.forEach(function (l) {
+        if (!l) return;
+        l = l.replace(/^[-•*\u2022]\s*/, "");
+        if (splitCommas && l.indexOf(",") !== -1) {
+            l.split(",").forEach(function (x) { x = x.trim(); if (x) items.push(x); });
+        } else if (l) items.push(l);
+    });
+    return items;
+}
+
+function descFaqPairs(lines) {
+    var pairs = [], q = null, a = [];
+    function flush() {
+        if (q !== null) pairs.push({ q: q, a: a.join(" ").trim() });
+        q = null; a = [];
+    }
+    lines.forEach(function (l) {
+        if (!l) return;
+        var am = l.match(/^(?:answer|a)\s*:\s*(.*)$/i);
+        var qm = l.match(/^(?:question|q)\s*:\s*(.*)$/i);
+        if (am) { a.push(am[1]); return; }
+        if (qm) { flush(); q = qm[1]; return; }
+        if (q === null) { q = l; }               // first line = a question
+        else if (a.length) { flush(); q = l; }   // new question after an answer
+        else { a.push(l); }                      // continuation w/o "Answer:" prefix
+    });
+    flush();
+    return pairs.filter(function (p) { return p.q && p.a; });
+}
+
+function renderDescription(p) {
+    var descEl = $("pp-desc");
+    var parsed = parseDescription(p.description);
+    var h = "";
+
+    parsed.intro.forEach(function (para) {
+        h += '<p class="pd-para">' + esc(para) + "</p>";
+    });
+
+    parsed.sections.forEach(function (s) {
+        var type = s.def ? s.def.type : "text";
+        var icon = s.def ? s.def.icon : "fa-solid fa-circle-info";
+        var body = "";
+
+        if (type === "pills") {
+            var pills = descItems(s.lines, true);
+            if (!pills.length) return;
+            body = '<div class="pd-pills">' + pills.map(function (x) {
+                return '<span class="pd-pill">' + esc(x) + "</span>";
+            }).join("") + "</div>";
+        } else if (type === "list") {
+            var items = descItems(s.lines, false);
+            if (!items.length) return;
+            body = '<ul class="pd-list">' + items.map(function (x) {
+                return '<li><i class="fa-solid fa-circle-check"></i><span>' + esc(x) + "</span></li>";
+            }).join("") + "</ul>";
+        } else if (type === "steps") {
+            var steps = descItems(s.lines, false);
+            if (!steps.length) return;
+            body = '<ol class="pd-steps">' + steps.map(function (x, i) {
+                return '<li><span class="pd-step-no">' + (i + 1) + "</span><span>" + esc(x) + "</span></li>";
+            }).join("") + "</ol>";
+        } else if (type === "faq") {
+            var pairs = descFaqPairs(s.lines);
+            if (!pairs.length) return;
+            body = '<div class="pd-faq">' + pairs.map(function (x) {
+                return '<div class="pd-faq-item" onclick="this.classList.toggle(\'open\')">'
+                    + '<div class="pd-faq-q"><span>' + esc(x.q) + '</span><i class="fa-solid fa-chevron-down"></i></div>'
+                    + '<div class="pd-faq-a"><p>' + esc(x.a) + "</p></div></div>";
+            }).join("") + "</div>";
+        } else {
+            var txt = s.lines.filter(function (l) { return l; });
+            if (!txt.length) return;
+            body = txt.map(function (l) { return '<p class="pd-para">' + esc(l) + "</p>"; }).join("");
         }
 
-function closeModal() {
-    clearTimeout(_modalUnlockT);
-    document.querySelector(".modal-info").classList.remove("locked");
-    $("modal-veil").classList.remove("on");
-    syncOverlayLock();
-}
-function onModalVeilClick(e) { if (e.target === $("modal-veil")) closeModal(); }
+        h += '<div class="pd-section"><h3 class="pd-title"><i class="' + icon + '"></i> '
+           + esc(s.label) + "</h3>" + body + "</div>";
+    });
 
-function mQty(d) {
-    if (!MOD_PROD) return;
-    var prev = MOD_QTY;
-    MOD_QTY = Math.max(1, Math.min(MOD_QTY + d, MOD_PROD.stockQty || 99));
-    var el = $("m-qty"); el.textContent = MOD_QTY;
-    if (prev !== MOD_QTY && !REDUCED) { el.style.animation = "none"; void el.offsetWidth; el.style.animation = "popIn .35s cubic-bezier(.34,1.56,.64,1) both"; }
+    if (!h) {
+        h = '<p class="pd-para">' + esc(p.brand + " " + p.title + (p.size ? " \u2014 " + p.size : "")) +
+            ". Message us on WhatsApp for full product details.</p>";
+    }
+    descEl.innerHTML = h;
+    show("pp-desc-wrap");
 }
-function addFromModal() { if (MOD_PROD) { flyToCart($("m-add")); addToCart(MOD_PROD.id, MOD_QTY); closeModal(); } }
+
+function ppQty(d) {
+    if (!PP_PROD) return;
+    var prev = PP_QTY;
+    PP_QTY = Math.max(1, Math.min(PP_QTY + d, maxQty(PP_PROD)));
+    var el = $("pp-qty"); el.textContent = PP_QTY;
+    if (prev !== PP_QTY && !REDUCED) { el.style.animation = "none"; void el.offsetWidth; el.style.animation = "popIn .35s cubic-bezier(.34,1.56,.64,1) both"; }
+}
+
+function addFromPage() {
+    if (!PP_PROD) return;
+    flyToCart($("pp-add"));
+    addToCart(PP_PROD.id, PP_QTY);
+}
 
 function quickAdd(id, el) { if (el) flyToCart(el); addToCart(id, 1); }
 
@@ -526,7 +828,7 @@ function addToCart(id, qty) {
     if (!p || !p.inStock) { showToast("Out of stock!", true); return; }
     var ex = findCartItem(id);
     var nq = (ex ? ex.qty : 0) + qty;
-    if (nq > p.stockQty) { showToast("Only " + p.stockQty + " available", true); return; }
+    if (nq > maxQty(p)) { showToast("Only " + maxQty(p) + " available", true); return; }
     if (ex) { ex.qty = nq; }
     else {
         CART.push({
@@ -983,4 +1285,265 @@ function submitContactForm(e) {
     document.getElementById("contact-form").classList.add("hidden");
     $("contact-success").classList.add("on");
     return false;
+}
+
+
+
+
+
+/* ═════════════════════════════════════════════════════════════
+   OFFER SECTION — driven by the 🎁 Offers sheet
+   The slides hard-coded in index.html act only as a fallback
+   until sheet data arrives (or if the sheet doesn't exist yet).
+   ═════════════════════════════════════════════════════════════ */
+
+var _offerTimer = null, _offerIdx = 0;
+
+/* "Up to *30% Off*" → highlight span; a newline in the cell → <br> */
+function offerTitleHTML(t) {
+    return esc(t)
+        .replace(/\*([^*]+)\*/g, "<span>$1</span>")
+        .replace(/\r?\n/g, "<br>");
+}
+
+function offerSlideHTML(o, first) {
+    var icon = String(o.icon || "").trim() || "fa-solid fa-tag";
+    var btn = String(o.buttonText || "").trim() || "Shop Now";
+    var link = String(o.link || "").trim();
+    // A bare number in the Link column jumps straight to that product's page.
+    var href = "#shop", extra = "";
+    if (/^\d+$/.test(link)) { href = "#product-" + link; }
+    else if (link) { href = link; if (/^https?:\/\//i.test(link)) extra = ' target="_blank" rel="noopener"'; }
+
+    var h = '<div class="offer-slide' + (first ? " is-active" : "") + '">';
+    h += '<div class="offer-copy">';
+    if (o.eyebrow) h += '<p class="offer-eyebrow"><i class="' + esc(icon) + '"></i> ' + esc(o.eyebrow) + '</p>';
+    h += '<h2 class="offer-title">' + offerTitleHTML(o.title || "") + '</h2>';
+    if (o.description) h += '<p class="offer-desc">' + esc(o.description) + '</p>';
+    h += '<a href="' + esc(href) + '"' + extra + ' class="offer-btn"><i class="fa-solid fa-bag-shopping"></i> ' + esc(btn) + '</a>';
+    h += '</div>';
+    h += '<div class="offer-image"><img src="' + esc(o.imageUrl || IMGS.d) + '" alt="' + esc(o.title || "Offer") + '" loading="lazy" onerror="this.onerror=null;this.src=\'' + IMGS.d + '\'"/></div>';
+    h += '</div>';
+    return h;
+}
+
+/* Called after loadData() — decides what the section shows. */
+function initOffers() {
+    var sec = $("offers");
+    if (!sec || !$("offerTrack")) return;
+    if (Array.isArray(OFFERS)) {
+        if (!OFFERS.length) { sec.classList.add("offers-off"); return; }
+        sec.classList.remove("offers-off");
+        var h = "";
+        OFFERS.forEach(function (o, i) { h += offerSlideHTML(o, i === 0); });
+        $("offerTrack").innerHTML = h;
+    }
+    buildOfferSlider();
+}
+
+/* (Re)binds dots + autoplay to whatever slides are in the track. */
+function buildOfferSlider() {
+    var track = $("offerTrack"), dotsWrap = $("offerDots");
+    if (!track || !dotsWrap) return;
+
+    // Arm the hide/stagger CSS only now, in the SAME synchronous pass that
+    // marks the active slide below — never a frame with everything hidden.
+    var slider = track.closest ? track.closest(".offer-slider") : null;
+    if (slider) slider.classList.add("js-anim");
+
+    clearInterval(_offerTimer);
+    _offerIdx = 0;
+    dotsWrap.innerHTML = "";
+
+    var slides = track.querySelectorAll(".offer-slide");
+    var total = slides.length;
+    if (!total) return;
+
+    for (var i = 0; i < total; i++) {
+        (function (i) {
+            var dot = document.createElement("button");
+            dot.className = "offer-dot" + (i === 0 ? " is-active" : "");
+            dot.setAttribute("aria-label", "Show offer " + (i + 1));
+            dot.addEventListener("click", function () { _offerIdx = i; offerRender(); offerResetTimer(); });
+            dotsWrap.appendChild(dot);
+        })(i);
+    }
+
+    function offerRender() {
+        track.style.transform = "translateX(-" + (_offerIdx * 100) + "%)";
+        var dots = dotsWrap.querySelectorAll(".offer-dot");
+        dots.forEach(function (d, i) { d.classList.toggle("is-active", i === _offerIdx); });
+        slides.forEach(function (s, i) { s.classList.toggle("is-active", i === _offerIdx); });
+    }
+    function offerNext() { _offerIdx = (_offerIdx + 1) % total; offerRender(); }
+    function offerResetTimer() {
+        clearInterval(_offerTimer);
+        if (total > 1 && !REDUCED) _offerTimer = setInterval(offerNext, 4500);
+    }
+
+    offerRender();
+    offerResetTimer();
+}
+
+/* ═════════════════════════════════════════════════════════════
+   GALLERY — driven by the 🖼 Gallery sheet (Title | Image URL)
+   The images hard-coded in gallery.html stay as a fallback when
+   the sheet doesn't exist yet or returns nothing. Every image
+   (sheet-driven or fallback) opens in a lightbox.
+   ═════════════════════════════════════════════════════════════ */
+
+/* Loading strategy:
+   1. Shimmer skeleton cards render INSTANTLY, before any network.
+   2. The last successful gallery is cached in localStorage, so repeat
+      visits paint real content immediately, then quietly revalidate
+      against the sheet (stale-while-revalidate).
+   3. Each image starts as a shimmer block and cross-fades in the
+      moment its file finishes downloading; the first 6 load eagerly
+      with high priority, the rest lazy-load as you scroll.
+   4. If the sheet is empty/unreachable and nothing is cached, a
+      friendly empty state replaces the skeletons (the page never
+      hangs on shimmer forever). */
+
+var GALLERY_CACHE_KEY = "sgc_gallery_v1";
+
+function initGallery() {
+    var grid = $("gallery-grid");
+    if (!grid) return;
+
+    // Lightbox via delegation — works for every item ever rendered.
+    grid.addEventListener("click", function (e) {
+        var item = e.target.closest ? e.target.closest(".gallery-item") : null;
+        if (!item || item.classList.contains("gallery-skel")) return;
+        var img = item.querySelector("img");
+        var cap = item.querySelector(".gallery-cap");
+        if (img) openLightbox(img.src, cap ? cap.textContent.trim() : (img.alt || ""));
+    });
+
+    // 1. Instant paint: cached real gallery if we have one, skeletons if not.
+    var cached = null;
+    try { cached = JSON.parse(lsGet(GALLERY_CACHE_KEY) || "null"); } catch (e) { cached = null; }
+    var hasCache = Array.isArray(cached) && cached.length > 0;
+
+    if (hasCache) renderGalleryItems(grid, cached);
+    else if (!grid.children.length) renderGallerySkeletons(grid, 9);
+
+    // 2. Fetch fresh data in the background.
+    fetchJson(API_URL + "?action=getGallery", null, 25000).then(function (d) {
+        var fresh = Array.isArray(d) ? d.filter(function (g) { return g && g.imageUrl; }) : null;
+
+        if (fresh && fresh.length) {
+            lsSet(GALLERY_CACHE_KEY, JSON.stringify(fresh));
+            // Skip the re-render when nothing changed — no flicker on repeat visits.
+            if (!hasCache || JSON.stringify(fresh) !== JSON.stringify(cached)) {
+                renderGalleryItems(grid, fresh);
+            }
+            return;
+        }
+
+        // Sheet empty or missing: nothing to show beyond cache.
+        if (!hasCache) renderGalleryEmpty(grid,
+            "Our gallery is being refreshed",
+            "New photos are on the way. Meanwhile, browse the collection or message us on WhatsApp.");
+    }).catch(function () {
+        if (!hasCache) renderGalleryEmpty(grid,
+            "Couldn't load the gallery",
+            "Please check your connection and try again.", true);
+    });
+}
+
+function renderGallerySkeletons(grid, n) {
+    // Varied heights so the shimmer already looks like the masonry it becomes.
+    var hts = [300, 360, 260, 340, 300, 380, 280, 330, 310];
+    var h = "";
+    for (var i = 0; i < n; i++) {
+        h += '<div class="gallery-item gallery-skel" style="height:' + hts[i % hts.length] + 'px" aria-hidden="true"></div>';
+    }
+    grid.innerHTML = h;
+}
+
+function renderGalleryItems(grid, items) {
+    var h = "";
+    items.forEach(function (g, i) {
+        var eager = i < 6;   // first viewport-ish batch downloads immediately
+        h += '<figure class="gallery-item is-loading reveal" data-delay="' + (Math.min(i, 11) * 45) + '">'
+            + '<img src="' + esc(g.imageUrl) + '" alt="' + esc(g.title || "Gallery image") + '"'
+            + (eager ? ' loading="eager" fetchpriority="high"' : ' loading="lazy"')
+            + ' decoding="async"'
+            + ' onload="this.closest(\'.gallery-item\').classList.remove(\'is-loading\')"'
+            + ' onerror="this.closest(\'.gallery-item\').remove()"/>'
+            + '<figcaption class="gallery-cap"><i class="fa-solid fa-magnifying-glass-plus"></i> '
+            + esc(g.title || "") + "</figcaption></figure>";
+    });
+    grid.innerHTML = h;
+    // Images served from the browser cache can finish before the onload
+    // attribute is evaluated — sweep for already-complete ones.
+    Array.prototype.forEach.call(grid.querySelectorAll(".gallery-item img"), function (img) {
+        if (img.complete && img.naturalWidth > 0) {
+            img.closest(".gallery-item").classList.remove("is-loading");
+        }
+    });
+    observeNew(Array.prototype.slice.call(grid.querySelectorAll(".gallery-item")));
+}
+
+function renderGalleryEmpty(grid, title, sub, retry) {
+    grid.innerHTML = '<div class="gallery-empty">'
+        + '<i class="fa-regular fa-images"></i>'
+        + '<h3>' + esc(title) + '</h3>'
+        + '<p>' + esc(sub) + '</p>'
+        + (retry ? '<button class="gal-retry" onclick="initGalleryRetry()"><i class="fa fa-rotate-right"></i> Try Again</button>' : '')
+        + '</div>';
+}
+
+function initGalleryRetry() {
+    var grid = $("gallery-grid");
+    if (!grid) return;
+    renderGallerySkeletons(grid, 9);
+    fetchJson(API_URL + "?action=getGallery", null, 25000).then(function (d) {
+        var fresh = Array.isArray(d) ? d.filter(function (g) { return g && g.imageUrl; }) : null;
+        if (fresh && fresh.length) {
+            lsSet(GALLERY_CACHE_KEY, JSON.stringify(fresh));
+            renderGalleryItems(grid, fresh);
+        } else {
+            renderGalleryEmpty(grid, "Our gallery is being refreshed",
+                "New photos are on the way. Meanwhile, browse the collection or message us on WhatsApp.");
+        }
+    }).catch(function () {
+        renderGalleryEmpty(grid, "Couldn't load the gallery",
+            "Please check your connection and try again.", true);
+    });
+}
+
+var _lbKeyBound = false;
+
+function openLightbox(src, title) {
+    var lb = $("lightbox");
+    if (!lb) {
+        lb = document.createElement("div");
+        lb.id = "lightbox";
+        lb.innerHTML = '<button class="lb-x" aria-label="Close"><i class="fa fa-xmark"></i></button>'
+            + '<figure class="lb-fig"><img id="lb-img" src="" alt=""/>'
+            + '<figcaption id="lb-cap"></figcaption></figure>';
+        document.body.appendChild(lb);
+        lb.addEventListener("click", function (e) {
+            if (e.target === lb || e.target.closest(".lb-x")) closeLightbox();
+        });
+    }
+    if (!_lbKeyBound) {
+        _lbKeyBound = true;
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape" && $("lightbox") && $("lightbox").classList.contains("on")) closeLightbox();
+        });
+    }
+    $("lb-img").src = src;
+    $("lb-img").alt = title || "";
+    $("lb-cap").textContent = title || "";
+    lb.classList.add("on");
+    document.body.classList.add("ovl-open");
+    document.documentElement.classList.add("ovl-open");
+}
+
+function closeLightbox() {
+    var lb = $("lightbox");
+    if (lb) lb.classList.remove("on");
+    syncOverlayLock();
 }

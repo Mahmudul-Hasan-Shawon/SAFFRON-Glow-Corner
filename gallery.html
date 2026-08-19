@@ -17,25 +17,25 @@
     <link rel="shortcut icon" href="https://cdn-icons-png.flaticon.com/512/346/346167.png" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <link rel="stylesheet" href="assets/styles.css" />
+    <script src="https://unpkg.com/lenis@1.3.13/dist/lenis.min.js" defer></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof Lenis === "undefined") return;   // CDN slow/blocked → normal scrolling
+            const lenis = new Lenis({
+                duration: 1.2,
+                smoothWheel: true,
+                lerp: 0.1,
+                wheelMultiplier: 1,
+                touchMultiplier: 1.5
+            });
+            function raf(time) {
+                lenis.raf(time);
+                requestAnimationFrame(raf);
+            }
+            requestAnimationFrame(raf);
+        });
+    </script>
 </head>
-<script src="https://unpkg.com/lenis@1.3.13/dist/lenis.min.js"></script>
-
-<script>
-const lenis = new Lenis({
-    duration: 1.2,
-    smoothWheel: true,
-    lerp: 0.1,
-    wheelMultiplier: 1,
-    touchMultiplier: 1.5
-});
-
-function raf(time) {
-    lenis.raf(time);
-    requestAnimationFrame(raf);
-}
-
-requestAnimationFrame(raf);
-</script>
 
 <body>
 
@@ -96,150 +96,8 @@ requestAnimationFrame(raf);
             <!-- filters will be populated by JS if needed -->
         </div>
         <div class="gallery-grid reveal" id="gallery-grid">
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://cdn.bdstall.com/product-image/450008_800X800.webp" alt="Skincare product"
-                    loading="lazy" />
-                <div class="gallery-cap">Premium Skincare</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://static-01.daraz.com.bd/p/9ca50e7cae1ccd8e284cf1dbe1dde138.jpg" alt="Skincare product"
-                    loading="lazy" />
-                <div class="gallery-cap">Korean Skincare Essential</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://au.thefaceshop.com/cdn/shop/files/RICE_CERAMIDECream.jpg?v=1753704558&width=1440"
-                    alt="The Face Shop Rice Ceramide Cream" loading="lazy" />
-                <div class="gallery-cap">Rice & Ceramide Cream</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://aubeautybazaar.com/cdn/shop/files/beauty-of-joseon-relief-sun-10ml-3896945.png?v=1771417989"
-                    alt="Beauty of Joseon Relief Sun" loading="lazy" />
-                <div class="gallery-cap">Beauty of Joseon Relief Sun</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://poripati.net/wp-content/uploads/2026/04/Beauty-Of-Joseon-Relief-Sun-Aqua-Fresh-Rice-B5-SPF50-PA.jpg"
-                    alt="Beauty of Joseon Relief Sun Aqua Fresh" loading="lazy" />
-                <div class="gallery-cap">Relief Sun Aqua-Fresh SPF 50+</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://cdn-image.oliveyoung.com/prdtImg/1835/27c3e0cd-b1e5-4db0-93a0-355b30c988a3.jpg?RS=1500x1500&AR=0&QT=80"
-                    alt="Korean skincare product" loading="lazy" />
-                <div class="gallery-cap">K-Beauty Skincare</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://glowberry.gr/cdn/shop/files/71kTiwQf_dL._SL1500.jpg?v=1765898684&width=1946"
-                    alt="Korean skincare product" loading="lazy" />
-                <div class="gallery-cap">Korean Beauty Essential</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://www.lamourlife.com/cdn/shop/files/BeautyofJoseonGroundRiceandHoneyGlowMask150ml_01.png?v=1762980856&width=1024"
-                    alt="Beauty of Joseon Ground Rice and Honey Glow Mask" loading="lazy" />
-                <div class="gallery-cap">Ground Rice & Honey Glow Mask</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://kcbazar.com/wp-content/uploads/2025/03/SKIN1004-Madagascar-Centella-Hyalu-Cica-Water-Fit-Sun-Serum-Spf-50-PA-50-ml-2-1.jpg"
-                    alt="SKIN1004 Hyalu-Cica Water-Fit Sun Serum" loading="lazy" />
-                <div class="gallery-cap">SKIN1004 Hyalu-Cica Sun Serum</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://skin1004india.com/cdn/shop/files/skin1004-cleanser-centella-light-cleansing-oil-38409133490422.jpg?v=1771411449&width=2048"
-                    alt="SKIN1004 Centella Light Cleansing Oil" loading="lazy" />
-                <div class="gallery-cap">Centella Light Cleansing Oil</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://cosibella-wholesale.com/hpeciai/4d173c1e71becb2db87937996e984369/eng_pl_SKIN1004-Madagascar-Centella-Tone-Brightening-Capsule-Ampoule-Brightening-Ampoule-with-Asian-Centella-30ml-13943_1.webp"
-                    alt="SKIN1004 Tone Brightening Capsule Ampoule" loading="lazy" />
-                <div class="gallery-cap">Tone Brightening Capsule Ampoule</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://cdn-image.oliveyoung.com/prdtImg/1646/95aa899d-d54c-4bbe-a45c-81e65c038248.jpg?RS=1500x1500&AR=0&SF=webp&QT=80"
-                    alt="Korean skincare product" loading="lazy" />
-                <div class="gallery-cap">Korean Skincare Essential</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://www.koreanbeautykr.com/cdn/shop/files/skin1004-017977kn-1_1024x1024_b803f71c-753e-4477-82f0-246c5bed6c1b.webp?v=1743413802&width=1200"
-                    alt="SKIN1004 skincare product" loading="lazy" />
-                <div class="gallery-cap">SKIN1004 Madagascar Centella</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://lavishta.com/wp-content/uploads/2024/12/Skin1004_Madagascar_Centella_Poremizing_Fresh_Ampoule_30ml_image_6__30111.jpg"
-                    alt="SKIN1004 Poremizing Fresh Ampoule" loading="lazy" />
-                <div class="gallery-cap">Poremizing Fresh Ampoule</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://unnieandco.fr/cdn/shop/files/221121_ReliefAmpoule.jpg?v=1736612787"
-                    alt="Beauty of Joseon Relief Ampoule" loading="lazy" />
-                <div class="gallery-cap">Beauty of Joseon Relief Ampoule</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://finelook.com/cdn/shop/files/51AQLkArUDL.jpg?v=1747820707"
-                    alt="Korean skincare product" loading="lazy" />
-                <div class="gallery-cap">K-Beauty Skincare</div>
-            </div>
 
 
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://static-01.daraz.com.bd/p/5429918527edbea7550021f81fb3fb2a.jpg" alt="Skincare product"
-                    loading="lazy" />
-                <div class="gallery-cap">Skincare Essential</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://kiokii.com/cdn/shop/files/axis-y-dark-spot-correcting-glow-serum-mini-5mlaxis-ykiokii-and-2353019.webp?v=1757433614"
-                    alt="AXIS-Y Dark Spot Correcting Glow Serum" loading="lazy" />
-                <div class="gallery-cap">AXIS-Y Dark Spot Correcting Glow Serum</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://koreanhomee.com/wp-content/uploads/2024/08/IMG_8473.jpeg"
-                    alt="AXIS-Y Dark Spot Correcting Glow Toner" loading="lazy" />
-                <div class="gallery-cap">AXIS-Y Dark Spot Correcting Glow Toner</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://kocos.bg/images/2/0cf8df5cc6b9427a68ed27c2c652b555/61q1aFWTxmL.-SL1500--15663.jpg"
-                    alt="AXIS-Y Dark Spot Correcting Glow Cream" loading="lazy" />
-                <div class="gallery-cap">AXIS-Y Dark Spot Correcting Glow Cream</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://glamournupur.com/wp-content/uploads/2025/11/Beaute-Glutathione-Brightening-Tone-Up-Cream-45ml.jpg"
-                    alt="Glutathione Brightening Tone-Up Cream" loading="lazy" />
-                <div class="gallery-cap">Glutathione Brightening Tone-Up Cream</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://static-01.daraz.com.bd/p/e14b57cb84a259b8b6906cf29e236419.jpg" alt="Skincare product"
-                    loading="lazy" />
-                <div class="gallery-cap">Beauty Care Essential</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://fairskincarebd.com/wp-content/uploads/2020/01/Missha-Soft-Finish-Sun-Milk-SPF50_2.jpg"
-                    alt="Missha Soft Finish Sun Milk SPF50" loading="lazy" />
-                <div class="gallery-cap">Missha Soft Finish Sun Milk SPF 50+</div>
-            </div>
-
-            <div class="gallery-item" data-cat="skincare">
-                <img src="https://www.ogerio.com/wp-content/uploads/2025/05/Dabo-All-in-One-Black-Snail-Repair-Cream-50-ml-5.jpg"
-                    alt="Dabo All-in-One Black Snail Repair Cream" loading="lazy" />
-                <div class="gallery-cap">Dabo Black Snail Repair Cream</div>
-            </div>
         </div>
     </div>
 
@@ -443,7 +301,7 @@ requestAnimationFrame(raf);
                 </div>
                 <p class="inv-thanks">🌸 Thank you for shopping with Saffron Glow Corner!</p>
                 <div class="inv-footer"><strong style="color:var(--rose-d)">Saffron Glow Corner</strong>
-                    &nbsp;|&nbsp; glowsaffron7@gmail.com &nbsp;|&nbsp; © 2026</div>
+                    &nbsp;|&nbsp; Saffronbeauty@gmail.com &nbsp;|&nbsp; © 2026</div>
             </div>
             <div class="inv-actions">
                 <button class="btn-inv btn-inv-out" onclick="printInvoice()"><i class="fa fa-print"></i> Print</button>
@@ -461,14 +319,14 @@ requestAnimationFrame(raf);
             <div class="footer-grid">
                 <div class="reveal">
                     <div class="footer-brand-name" style="display: flex; align-items: center; gap: 12px;">
-                        <img src="./assets/logo/saffron_1.svg" alt="Saffron" style="width: 100px; height: auto;">
+                        <img src="./assets/logo/Saffron_1.svg" alt="Saffron" style="width: 100px; height: auto;">
 
                         <div style="display: flex; flex-direction: column;">
-                            <div style="color:#fb7185; font-size: 28px; font-weight: 700; letter-spacing: 19px;">
+                            <div style="color:#fb7185; font-size: 30px; font-weight: 700; letter-spacing: 19px;">
                                 SAFFRON
                             </div>
 
-                            <div style="color:#ffc1ca;font-family:manrope;font-size: 8px; font-weight: 400; letter-spacing: 1.8px; margin-top: 3px; white-space: nowrap;">
+                            <div style="color:#ffc1ca;font-family:manrope;font-size: 8px; font-weight: 400; letter-spacing: 2px; margin-top: 3px; white-space: nowrap;">
                                 BEAUTY THAT INSPIRES, QUALITY THAT LASTS
                             </div>
                         </div>
@@ -476,10 +334,10 @@ requestAnimationFrame(raf);
                     <p class="footer-about">Your trusted destination for premium skincare and beauty products in
                         Bangladesh. We bring you authentic products from world-renowned brands at the best prices.</p>
                     <div class="footer-socials">
-                        <a href="https://www.facebook.com/people/Saffron-Beauty/61553616282600/" target="_blank"
+                        <!-- <a href="https://www.facebook.com/people/Saffron-Beauty/61553616282600/" target="_blank"
                             rel="noopener" aria-label="Facebook" class="footer-social-link"><i
-                                class="fab fa-facebook-f"></i></a>
-                        <a href="https://www.instagram.com/Saffronbeauty007" target="_blank" rel="noopener"
+                                class="fab fa-facebook-f"></i></a> -->
+                        <a href="https://www.instagram.com/glowsaffron7" target="_blank" rel="noopener"
                             aria-label="Instagram" class="footer-social-link"><i class="fab fa-instagram"></i></a>
                         <a href="https://wa.me/message/OOV6ZSFN26OPP1" target="_blank" rel="noopener" aria-label="WhatsApp"
                             id="wa-footer" class="footer-social-link"><i class="fab fa-whatsapp"></i></a>
@@ -517,7 +375,7 @@ requestAnimationFrame(raf);
                     </div>
                     <div class="footer-contact-item">
                         <i class="fas fa-phone"></i>
-                        <a href="tel:01874460244">01874460244</a>
+                        <a href="tel:+8801874460244">+8801874460244</a>
                     </div>
                     <div class="footer-contact-item">
                         <i class="fas fa-envelope"></i>
