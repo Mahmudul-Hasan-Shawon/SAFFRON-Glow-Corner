@@ -354,7 +354,7 @@ function buildPills() {
     var h = "";
     cats.forEach(function (c) {
         h += '<button class="pill' + (c === "All" ? " on" : "") + '" data-cat="' + esc(c) +
-             '" onclick="setCat(\'' + jsStr(c) + '\')">' + esc(c) + '</button>';
+            '" onclick="setCat(\'' + jsStr(c) + '\')">' + esc(c) + '</button>';
     });
     $("cat-pills").innerHTML = h;
 
@@ -472,16 +472,16 @@ function cardHTML(p, idx) {
     var si = getStockInfo(p);
     var delay = Math.min(idx, 11) * 55;
     var h = '<div class="card reveal" data-delay="' + delay + '" onclick="openProduct(' + p.id + ')">';
-        h += '<div class="card-img"><img src="' + esc(getImg(p)) + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + IMGS.d + '\'"/>';
-        h += '<div class="card-badges">';
-        if (p.hasDiscount) h += '<span class="badge badge-sale">-' + p.discountPct + '%</span>';
-        else if (si.cls === "low") h += '<span class="badge badge-low">Low Stock</span>';
-        h += '</div><button class="card-quick" aria-label="Add to bag" onclick="event.stopPropagation();quickAdd(' + p.id + ',this)" ' + dis + '><i class="fa-solid fa-cart-plus"></i></button></div>';
-        h += '<div class="card-body"><span class="card-brand">' + esc(p.brand) + '</span><p class="card-name">' + esc(p.title) + '</p><p class="card-size">' + esc(p.size) + '</p>';
-        h += '<div class="card-pricing"><span class="p-new">' + fmt(px) + '</span>';
-        if (p.hasDiscount) h += '<span class="p-old">' + fmt(p.oldPrice) + '</span>';
-        h += '</div><div class="card-foot"><span class="stock-tag ' + si.cls + '">' + si.label + '</span>';
-        h += '<button class="add-btn" aria-label="Add to bag" onclick="event.stopPropagation();quickAdd(' + p.id + ',this)" ' + dis + '><i class="fa-solid fa-cart-plus"></i></button></div></div></div>';
+    h += '<div class="card-img"><img src="' + esc(getImg(p)) + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + IMGS.d + '\'"/>';
+    h += '<div class="card-badges">';
+    if (p.hasDiscount) h += '<span class="badge badge-sale">-' + p.discountPct + '%</span>';
+    else if (si.cls === "low") h += '<span class="badge badge-low">Low Stock</span>';
+    h += '</div><button class="card-quick" aria-label="Add to bag" onclick="event.stopPropagation();quickAdd(' + p.id + ',this)" ' + dis + '><i class="fa-solid fa-cart-plus"></i></button></div>';
+    h += '<div class="card-body"><span class="card-brand">' + esc(p.brand) + '</span><p class="card-name">' + esc(p.title) + '</p><p class="card-size">' + esc(p.size) + '</p>';
+    h += '<div class="card-pricing"><span class="p-new">' + fmt(px) + '</span>';
+    if (p.hasDiscount) h += '<span class="p-old">' + fmt(p.oldPrice) + '</span>';
+    h += '</div><div class="card-foot"><span class="stock-tag ' + si.cls + '">' + si.label + '</span>';
+    h += '<button class="add-btn" aria-label="Add to bag" onclick="event.stopPropagation();quickAdd(' + p.id + ',this)" ' + dis + '><i class="fa-solid fa-cart-plus"></i></button></div></div></div>';
     return h;
 }
 
@@ -648,12 +648,13 @@ function renderRelated(p) {
    ═════════════════════════════════════════════════════════════ */
 
 var DESC_SECTIONS = [
-    { keys: ["for", "suitable for"],                              type: "pills", label: "For",          icon: "fa-solid fa-user-check" },
-    { keys: ["ingredients", "key ingredients"],                   type: "list", label: "Ingredients",  icon: "fa-solid fa-leaf" },
-    { keys: ["benefits", "key benefits"],                         type: "list",  label: "Benefits",     icon: "fa-solid fa-star" },
-    { keys: ["key features", "features", "highlights"],           type: "list",  label: "Key Features", icon: "fa-solid fa-wand-magic-sparkles" },
-    { keys: ["how to use", "usage", "directions", "how to apply"],type: "steps", label: "How to Use",   icon: "fa-solid fa-hand-sparkles" },
-    { keys: ["faq", "faqs"],                                      type: "faq",   label: "FAQ",          icon: "fa-solid fa-circle-question" }
+    { keys: ["for", "suitable for"], type: "pills", label: "For", icon: "fa-solid fa-user-check" },
+    // { keys: ["ingredients", "key ingredients"],                type: "list", label: "Ingredients",  icon: "fa-solid fa-leaf" },
+    { keys: ["ingredients", "key ingredients"], type: "ingredients", label: "Ingredients", icon: "fa-solid fa-leaf" },
+    { keys: ["benefits", "key benefits"], type: "list", label: "Benefits", icon: "fa-solid fa-star" },
+    { keys: ["key features", "features", "highlights"], type: "list", label: "Key Features", icon: "fa-solid fa-wand-magic-sparkles" },
+    { keys: ["how to use", "usage", "directions", "how to apply"], type: "steps", label: "How to Use", icon: "fa-solid fa-hand-sparkles" },
+    { keys: ["faq", "faqs"], type: "faq", label: "FAQ", icon: "fa-solid fa-circle-question" }
 ];
 
 // "Ingredients:"  /  "For: Male, Female"  → { def|null, label, inline }
@@ -765,15 +766,27 @@ function renderDescription(p) {
         if (type === "pills") {
             var pills = descItems(s.lines, true);
             if (!pills.length) return;
+
             body = '<div class="pd-pills">' + pills.map(function (x) {
                 return '<span class="pd-pill">' + esc(x) + "</span>";
             }).join("") + "</div>";
+
+        } else if (type === "ingredients") {
+            var ingredients = s.lines.filter(function (l) { return l; });
+            if (!ingredients.length) return;
+
+            body = ingredients.map(function (l) {
+                return '<p class="pd-para">' + esc(l) + "</p>";
+            }).join("");
+
         } else if (type === "list") {
             var items = descItems(s.lines, false);
             if (!items.length) return;
+
             body = '<ul class="pd-list">' + items.map(function (x) {
                 return '<li><i class="fa-solid fa-circle-check"></i><span>' + esc(x) + "</span></li>";
             }).join("") + "</ul>";
+
         } else if (type === "steps") {
             var steps = descItems(s.lines, false);
             if (!steps.length) return;
@@ -795,7 +808,7 @@ function renderDescription(p) {
         }
 
         h += '<div class="pd-section"><h3 class="pd-title"><i class="' + icon + '"></i> '
-           + esc(s.label) + "</h3>" + body + "</div>";
+            + esc(s.label) + "</h3>" + body + "</div>";
     });
 
     if (!h) {
@@ -1064,7 +1077,7 @@ function placeOrder() {
         refreshProducts();
     }).catch(function (e) {
         fail(((e && e.message) || "Could not place order.") +
-             " If this keeps happening, message us on WhatsApp before re-ordering so we don't duplicate it.");
+            " If this keeps happening, message us on WhatsApp before re-ordering so we don't duplicate it.");
     }).then(function () {
         btn.disabled = false;
         btn.innerHTML = '<i class="fa fa-check-circle"></i> Place Order';
