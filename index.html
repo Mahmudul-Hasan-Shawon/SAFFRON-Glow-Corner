@@ -54,7 +54,9 @@
     <nav id="navbar">
         <div class="nav-main">
             <div class="nav-logo" id="site-logo" role="button" tabindex="0" onclick="scrollToShop()"
-                onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();scrollToShop();}">Saffron</div>
+                onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();scrollToShop();}">
+                <img src="./assets/logo/saffron_1.svg" alt="Saffron" style="width: 100px; height: auto;">
+            </div>
             <div class="search-wrap" id="search-wrap">
                 <div class="search-input-box">
                     <input type="search" id="search-inp" aria-label="Search products and brands"
@@ -69,7 +71,8 @@
                 <a href="gallery.html" class="nav-page-link">Gallery</a>
                 <a href="faq.html" class="nav-page-link">FAQ</a>
                 <a href="contact.html" class="nav-page-link">Contact</a>
-                <button class="nav-track-btn" onclick="openTrack()"><i class="fa-solid fa-truck-fast"></i><span>TrackOrder</span></button>
+                <button class="nav-track-btn" onclick="openTrack()"><i
+                        class="fa-solid fa-truck-fast"></i><span>TrackOrder</span></button>
                 <button class="nav-icon-btn" id="cart-btn" onclick="toggleCart()" title="Cart" aria-label="Open cart">
                     <i class="fa fa-bag-shopping"></i>
                     <span class="cart-count hidden" id="cart-cnt">0</span>
@@ -302,33 +305,36 @@
     </section>
 
     <section class="offer-section" id="offers">
-  <div class="offer-petal offer-petal-1"></div>
-  <div class="offer-petal offer-petal-2"></div>
-  <div class="offer-petal offer-petal-3"></div>
+        <div class="offer-petal offer-petal-1"></div>
+        <div class="offer-petal offer-petal-2"></div>
+        <div class="offer-petal offer-petal-3"></div>
 
-  <div class="offer-slider">
-    <div class="offer-viewport">
-      <div class="offer-track" id="offerTrack">
+        <div class="offer-slider">
+            <div class="offer-viewport">
+                <div class="offer-track" id="offerTrack">
 
-        <!-- Added is-active to first slide to prevent flash of invisible text on load -->
-        <div class="offer-slide is-active">
-          <div class="offer-copy">
-            <p class="offer-eyebrow"><i class="fa-solid fa-tag"></i> Limited Time</p>
-            <h2 class="offer-title">Up to <span>30% Off</span><br>Beauty of Joseon</h2>
-            <p class="offer-desc">Stock up on the Relief Sun and Glow Serum — our most-loved rice and honey essentials, now at their lowest price this month.</p>
-            <a href="#shop" class="offer-btn"><i class="fa-solid fa-bag-shopping"></i> Shop the Offer</a>
-          </div>
-          <div class="offer-image">
-            <img src="https://aubeautybazaar.com/cdn/shop/files/beauty-of-joseon-relief-sun-10ml-3896945.png?v=1771417989" alt="Beauty of Joseon Relief Sun" loading="lazy" />
-          </div>
+                    <!-- Added is-active to first slide to prevent flash of invisible text on load -->
+                    <div class="offer-slide is-active">
+                        <div class="offer-copy">
+                            <p class="offer-eyebrow"><i class="fa-solid fa-tag"></i> Limited Time</p>
+                            <h2 class="offer-title">Up to <span>30% Off</span><br>Beauty of Joseon</h2>
+                            <p class="offer-desc">Stock up on the Relief Sun and Glow Serum — our most-loved rice and
+                                honey essentials, now at their lowest price this month.</p>
+                            <a href="#shop" class="offer-btn"><i class="fa-solid fa-bag-shopping"></i> Shop the
+                                Offer</a>
+                        </div>
+                        <div class="offer-image">
+                            <img src="https://aubeautybazaar.com/cdn/shop/files/beauty-of-joseon-relief-sun-10ml-3896945.png?v=1771417989"
+                                alt="Beauty of Joseon Relief Sun" loading="lazy" />
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="offer-dots" id="offerDots"></div>
         </div>
-
-      </div>
-    </div>
-
-    <div class="offer-dots" id="offerDots"></div>
-  </div>
-</section>
+    </section>
 
     <!-- ── Product details page (rendered by JS, no separate URL files) ── -->
     <section id="product-page" class="hidden" aria-live="polite">
@@ -650,17 +656,14 @@
         <div class="footer-main">
             <div class="footer-grid">
                 <div class="reveal">
-                    <div class="footer-brand-name" style="display: flex; align-items: center; gap: 12px;">
-                        <img src="./assets/logo/saffron_1.svg" alt="Saffron" style="width: 80px; height: auto;">
+                    <div class="footer-brand-name"
+                        style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
+                        <img src="./assets/logo/saffron_footer.svg" alt="Saffron"
+                            style="width: 10rem; height: auto;">
 
-                        <div style="display: flex; flex-direction: column;">
-                            <div style="color:#fb7185; font-size: 30px; font-weight: 700; letter-spacing: 19px;">
-                                SAFFRON
-                            </div>
-
-                            <div style="color:#ffc1ca;font-family:manrope;font-size: 8px; font-weight: 400; letter-spacing: 2px; margin-top: 3px; white-space: nowrap;">
-                                BEAUTY THAT INSPIRES, QUALITY THAT LASTS
-                            </div>
+                        <div
+                            style="color:#ffc1ca; font-family:manrope; font-size: 9px; font-weight: 400; letter-spacing: 2px; white-space: nowrap;">
+                            BEAUTY THAT INSPIRES, QUALITY THAT LASTS
                         </div>
                     </div>
                     <p class="footer-about">Your trusted destination for premium skincare and beauty products in
@@ -671,8 +674,9 @@
                                 class="fab fa-facebook-f"></i></a> -->
                         <a href="https://www.instagram.com/glowsaffron7" target="_blank" rel="noopener"
                             aria-label="Instagram" class="footer-social-link"><i class="fab fa-instagram"></i></a>
-                        <a href="https://wa.me/message/OOV6ZSFN26OPP1" target="_blank" rel="noopener" aria-label="WhatsApp"
-                            id="wa-footer" class="footer-social-link"><i class="fab fa-whatsapp"></i></a>
+                        <a href="https://wa.me/message/OOV6ZSFN26OPP1" target="_blank" rel="noopener"
+                            aria-label="WhatsApp" id="wa-footer" class="footer-social-link"><i
+                                class="fab fa-whatsapp"></i></a>
                     </div>
                 </div>
                 <div class="reveal">

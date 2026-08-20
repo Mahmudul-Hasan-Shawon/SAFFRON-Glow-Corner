@@ -5,7 +5,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FAQ — Saffron Glow Corner</title>
-    <meta name="description" content="Answers to common questions about ordering, delivery, payment, and product authenticity at Saffron Glow Corner." />
+    <meta name="description"
+        content="Answers to common questions about ordering, delivery, payment, and product authenticity at Saffron Glow Corner." />
     <meta name="theme-color" content="#9F1239" />
     <base target="_top" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -48,20 +49,23 @@
 
     <nav id="navbar">
         <div class="nav-main">
-            <a href="index.html" class="nav-logo" id="site-logo">Saffron</a>
+            <a href="index.html" class="nav-logo" id="site-logo">
+                <img src="./assets/logo/saffron_1.svg" alt="Saffron" style="width: 100px; height: auto;">
+            </a>
             <div class="nav-actions" style="margin-left:auto">
                 <a href="index.html" class="nav-page-link">Home</a>
                 <a href="about.html" class="nav-page-link">About</a>
                 <a href="gallery.html" class="nav-page-link">Gallery</a>
                 <a href="faq.html" class="nav-page-link" style="color:var(--rose-d);background:var(--rose-s)">FAQ</a>
                 <a href="contact.html" class="nav-page-link">Contact</a>
-                <button class="nav-track-btn" onclick="openTrack()"><i class="fa-solid fa-truck-fast"></i><span>Track Order</span></button>
+                <button class="nav-track-btn" onclick="openTrack()"><i class="fa-solid fa-truck-fast"></i><span>Track
+                        Order</span></button>
                 <button class="nav-icon-btn" id="cart-btn" onclick="toggleCart()" title="Cart" aria-label="Open cart">
                     <i class="fa fa-bag-shopping"></i>
                     <span class="cart-count hidden" id="cart-cnt">0</span>
                 </button>
-                <a href="https://wa.me/message/OOV6ZSFN26OPP1" id="wa-btn" target="_blank" rel="noopener" class="nav-icon-btn"
-                    title="WhatsApp" aria-label="Chat on WhatsApp" style="color:#22C55E">
+                <a href="https://wa.me/message/OOV6ZSFN26OPP1" id="wa-btn" target="_blank" rel="noopener"
+                    class="nav-icon-btn" title="WhatsApp" aria-label="Chat on WhatsApp" style="color:#22C55E">
                     <i class="fa-brands fa-whatsapp"></i>
                 </a>
             </div>
@@ -73,14 +77,16 @@
         <button class="mbn-item" id="mbn-cart" onclick="toggleCart()"><i
                 class="fa fa-bag-shopping"></i><span>Cart</span><span class="mbn-badge hidden"
                 id="mbn-cart-cnt">0</span></button>
-        <button class="mbn-item" id="mbn-track" onclick="openTrack()"><i class="fa-solid fa-truck-fast"></i><span>Track</span></button>
+        <button class="mbn-item" id="mbn-track" onclick="openTrack()"><i
+                class="fa-solid fa-truck-fast"></i><span>Track</span></button>
         <a class="mbn-item" id="mbn-chat" href="https://wa.me/message/OOV6ZSFN26OPP1" target="_blank" rel="noopener"><i
                 class="fa-brands fa-whatsapp"></i><span>Chat</span></a>
     </nav>
 
     <section class="page-hero">
         <div class="page-hero-inner">
-            <div class="crumbs"><a href="index.html">Home</a> <i class="fa-solid fa-chevron-right" style="font-size:8px"></i> <span>FAQ</span></div>
+            <div class="crumbs"><a href="index.html">Home</a> <i class="fa-solid fa-chevron-right"
+                    style="font-size:8px"></i> <span>FAQ</span></div>
             <div class="hero-eyebrow"><i class="fa fa-circle-question"></i> Good to Know</div>
             <h1>Questions We Hear<br /><em>Most Often</em></h1>
             <p>Can't find your answer here? Message us directly on WhatsApp and we'll get back to you quickly.</p>
@@ -90,43 +96,81 @@
     <div class="static-section">
         <div class="faq-list">
             <div class="faq-item reveal">
-                <button class="faq-q" onclick="toggleFaq(this)">Are your products genuine and authentic?<i class="fa-solid fa-plus"></i></button>
-                <div class="faq-a"><p>Yes — every product we carry is sourced directly and checked for authenticity before it goes on the site. We never sell expired stock or counterfeit items, and batch details are visible on the packaging.</p></div>
+                <button class="faq-q" onclick="toggleFaq(this)">Are your products genuine and authentic?<i
+                        class="fa-solid fa-plus"></i></button>
+                <div class="faq-a">
+                    <p>Yes — every product we carry is sourced directly and checked for authenticity before it goes on
+                        the site. We never sell expired stock or counterfeit items, and batch details are visible on the
+                        packaging.</p>
+                </div>
             </div>
             <div class="faq-item reveal">
-                <button class="faq-q" onclick="toggleFaq(this)">Can I ask for a recommendation for my skin type?<i class="fa-solid fa-plus"></i></button>
-                <div class="faq-a"><p>Absolutely — message us on WhatsApp with your skin type and concerns (dryness, breakouts, brightening, etc.) and we'll suggest products that actually fit your routine.</p></div>
+                <button class="faq-q" onclick="toggleFaq(this)">Can I ask for a recommendation for my skin type?<i
+                        class="fa-solid fa-plus"></i></button>
+                <div class="faq-a">
+                    <p>Absolutely — message us on WhatsApp with your skin type and concerns (dryness, breakouts,
+                        brightening, etc.) and we'll suggest products that actually fit your routine.</p>
+                </div>
             </div>
             <div class="faq-item reveal">
-                <button class="faq-q" onclick="toggleFaq(this)">What delivery areas do you cover?<i class="fa-solid fa-plus"></i></button>
-                <div class="faq-a"><p>We deliver across Dhaka, with same-zone delivery to the Ashkona/Uttara area and wider delivery to the rest of the city and beyond. Delivery charges are calculated automatically at checkout based on your address.</p></div>
+                <button class="faq-q" onclick="toggleFaq(this)">What delivery areas do you cover?<i
+                        class="fa-solid fa-plus"></i></button>
+                <div class="faq-a">
+                    <p>We deliver across Dhaka, with same-zone delivery to the Ashkona/Uttara area and wider delivery to
+                        the rest of the city and beyond. Delivery charges are calculated automatically at checkout based
+                        on your address.</p>
+                </div>
             </div>
             <div class="faq-item reveal">
-                <button class="faq-q" onclick="toggleFaq(this)">What payment methods do you accept?<i class="fa-solid fa-plus"></i></button>
-                <div class="faq-a"><p>We accept Cash on Delivery, bKash, and Nagad. For bKash and Nagad, you'll send payment to our account and enter your transaction ID at checkout so we can confirm it quickly.</p></div>
+                <button class="faq-q" onclick="toggleFaq(this)">What payment methods do you accept?<i
+                        class="fa-solid fa-plus"></i></button>
+                <div class="faq-a">
+                    <p>We accept Cash on Delivery, bKash, and Nagad. For bKash and Nagad, you'll send payment to our
+                        account and enter your transaction ID at checkout so we can confirm it quickly.</p>
+                </div>
             </div>
             <div class="faq-item reveal">
-                <button class="faq-q" onclick="toggleFaq(this)">How do I track my order?<i class="fa-solid fa-plus"></i></button>
-                <div class="faq-a"><p>Every order gets a tracking code the moment it's placed. Click "Track Order" in the menu and enter your Order ID or tracking code to see live status, from processing through out-for-delivery.</p></div>
+                <button class="faq-q" onclick="toggleFaq(this)">How do I track my order?<i
+                        class="fa-solid fa-plus"></i></button>
+                <div class="faq-a">
+                    <p>Every order gets a tracking code the moment it's placed. Click "Track Order" in the menu and
+                        enter your Order ID or tracking code to see live status, from processing through
+                        out-for-delivery.</p>
+                </div>
             </div>
             <div class="faq-item reveal">
-                <button class="faq-q" onclick="toggleFaq(this)">Can I request a product that's not listed on the site?<i class="fa-solid fa-plus"></i></button>
-                <div class="faq-a"><p>Often, yes — message us on WhatsApp with the brand and product name and we'll let you know if we can source it and what the price and timeline would look like.</p></div>
+                <button class="faq-q" onclick="toggleFaq(this)">Can I request a product that's not listed on the site?<i
+                        class="fa-solid fa-plus"></i></button>
+                <div class="faq-a">
+                    <p>Often, yes — message us on WhatsApp with the brand and product name and we'll let you know if we
+                        can source it and what the price and timeline would look like.</p>
+                </div>
             </div>
             <div class="faq-item reveal">
-                <button class="faq-q" onclick="toggleFaq(this)">Can I cancel or change my order?<i class="fa-solid fa-plus"></i></button>
-                <div class="faq-a"><p>Changes are easiest before your order ships. Message us on WhatsApp with your order ID as soon as possible and we'll do our best to accommodate the change or cancellation.</p></div>
+                <button class="faq-q" onclick="toggleFaq(this)">Can I cancel or change my order?<i
+                        class="fa-solid fa-plus"></i></button>
+                <div class="faq-a">
+                    <p>Changes are easiest before your order ships. Message us on WhatsApp with your order ID as soon as
+                        possible and we'll do our best to accommodate the change or cancellation.</p>
+                </div>
             </div>
             <div class="faq-item reveal">
-                <button class="faq-q" onclick="toggleFaq(this)">How should I store my skincare products?<i class="fa-solid fa-plus"></i></button>
-                <div class="faq-a"><p>Keep most products in a cool, dry place away from direct sunlight, and check the expiry or period-after-opening symbol printed on the packaging. Some actives, like vitamin C serums, last longer if refrigerated.</p></div>
+                <button class="faq-q" onclick="toggleFaq(this)">How should I store my skincare products?<i
+                        class="fa-solid fa-plus"></i></button>
+                <div class="faq-a">
+                    <p>Keep most products in a cool, dry place away from direct sunlight, and check the expiry or
+                        period-after-opening symbol printed on the packaging. Some actives, like vitamin C serums, last
+                        longer if refrigerated.</p>
+                </div>
             </div>
         </div>
 
         <div class="faq-cta reveal">
             <h3>Still have a question?</h3>
             <p>We're happy to talk through custom designs, flavors, or delivery details.</p>
-            <a href="contact.html" class="hero-btn" style="background:linear-gradient(135deg,var(--rose-d),var(--rose));color:#fff"><i class="fa-brands fa-whatsapp"></i> <span>Contact Us</span></a>
+            <a href="contact.html" class="hero-btn"
+                style="background:linear-gradient(135deg,var(--rose-d),var(--rose));color:#fff"><i
+                    class="fa-brands fa-whatsapp"></i> <span>Contact Us</span></a>
         </div>
     </div>
 
@@ -225,7 +269,8 @@
         <div id="checkout-box" role="dialog" aria-modal="true" aria-label="Checkout">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
                 <h2 class="co-title">Checkout</h2>
-                <button class="icon-btn" aria-label="Close checkout" onclick="closeCheckout()"><i class="fa fa-xmark"></i></button>
+                <button class="icon-btn" aria-label="Close checkout" onclick="closeCheckout()"><i
+                        class="fa fa-xmark"></i></button>
             </div>
             <p class="co-sub">Complete your order below</p>
             <div class="order-mini">
@@ -234,11 +279,16 @@
                 <div class="osm-line big"><span>Total</span><span id="co-tot">৳0</span></div>
             </div>
             <div class="form-row">
-                <div class="form-group"><label for="co-fn">First Name *</label><input type="text" id="co-fn" autocomplete="given-name" placeholder="Nusrat" /></div>
-                <div class="form-group"><label for="co-ln">Last Name *</label><input type="text" id="co-ln" autocomplete="family-name" placeholder="Jahan" /></div>
+                <div class="form-group"><label for="co-fn">First Name *</label><input type="text" id="co-fn"
+                        autocomplete="given-name" placeholder="Nusrat" /></div>
+                <div class="form-group"><label for="co-ln">Last Name *</label><input type="text" id="co-ln"
+                        autocomplete="family-name" placeholder="Jahan" /></div>
             </div>
-            <div class="form-group"><label for="co-phone">Contact Number *</label><input type="tel" id="co-phone" inputmode="tel" autocomplete="tel" placeholder="01XXXXXXXXX" /></div>
-            <div class="form-group"><label for="co-addr">Delivery Address *</label><textarea id="co-addr" rows="2" autocomplete="street-address" placeholder="House No, Road, Area, City…" style="resize:none"></textarea></div>
+            <div class="form-group"><label for="co-phone">Contact Number *</label><input type="tel" id="co-phone"
+                    inputmode="tel" autocomplete="tel" placeholder="01XXXXXXXXX" /></div>
+            <div class="form-group"><label for="co-addr">Delivery Address *</label><textarea id="co-addr" rows="2"
+                    autocomplete="street-address" placeholder="House No, Road, Area, City…"
+                    style="resize:none"></textarea></div>
             <div class="form-group">
                 <label for="co-loc">Delivery Location *</label>
                 <select id="co-loc" onchange="onLocChange()">
@@ -262,11 +312,14 @@
                 Then fill your account number and transaction ID below.
             </div>
             <div id="txn-wrap" class="hidden">
-                <div class="form-group"><label for="co-acc">Your Mobile Account No. *</label><input type="text" id="co-acc" inputmode="tel" placeholder="01XXXXXXXXX" /></div>
-                <div class="form-group"><label for="co-txn">Transaction ID *</label><input type="text" id="co-txn" placeholder="TXN123456" /></div>
+                <div class="form-group"><label for="co-acc">Your Mobile Account No. *</label><input type="text"
+                        id="co-acc" inputmode="tel" placeholder="01XXXXXXXXX" /></div>
+                <div class="form-group"><label for="co-txn">Transaction ID *</label><input type="text" id="co-txn"
+                        placeholder="TXN123456" /></div>
             </div>
             <p class="form-err" id="co-err" role="alert"></p>
-            <button class="btn-place" id="btn-place" onclick="placeOrder()"><i class="fa fa-check-circle"></i> Place Order</button>
+            <button class="btn-place" id="btn-place" onclick="placeOrder()"><i class="fa fa-check-circle"></i> Place
+                Order</button>
         </div>
     </div>
 
@@ -347,17 +400,13 @@
         <div class="footer-main">
             <div class="footer-grid">
                 <div class="reveal">
-                    <div class="footer-brand-name" style="display: flex; align-items: center; gap: 12px;">
-                        <img src="./assets/logo/saffron_1.svg" alt="Saffron" style="width: 80px; height: auto;">
+                    <div class="footer-brand-name"
+                        style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
+                        <img src="./assets/logo/saffron_footer.svg" alt="Saffron" style="width: 10rem; height: auto;">
 
-                        <div style="display: flex; flex-direction: column;">
-                            <div style="color:#fb7185; font-size: 30px; font-weight: 700; letter-spacing: 19px;">
-                                SAFFRON
-                            </div>
-
-                            <div style="color:#ffc1ca;font-family:manrope;font-size: 8px; font-weight: 400; letter-spacing: 2px; margin-top: 3px; white-space: nowrap;">
-                                BEAUTY THAT INSPIRES, QUALITY THAT LASTS
-                            </div>
+                        <div
+                            style="color:#ffc1ca; font-family:manrope; font-size: 9px; font-weight: 400; letter-spacing: 2px; white-space: nowrap;">
+                            BEAUTY THAT INSPIRES, QUALITY THAT LASTS
                         </div>
                     </div>
                     <p class="footer-about">Your trusted destination for premium skincare and beauty products in
@@ -368,8 +417,9 @@
                                 class="fab fa-facebook-f"></i></a> -->
                         <a href="https://www.instagram.com/glowsaffron7" target="_blank" rel="noopener"
                             aria-label="Instagram" class="footer-social-link"><i class="fab fa-instagram"></i></a>
-                        <a href="https://wa.me/message/OOV6ZSFN26OPP1" target="_blank" rel="noopener" aria-label="WhatsApp"
-                            id="wa-footer" class="footer-social-link"><i class="fab fa-whatsapp"></i></a>
+                        <a href="https://wa.me/message/OOV6ZSFN26OPP1" target="_blank" rel="noopener"
+                            aria-label="WhatsApp" id="wa-footer" class="footer-social-link"><i
+                                class="fab fa-whatsapp"></i></a>
                     </div>
                 </div>
                 <div class="reveal">
