@@ -107,7 +107,7 @@ var REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* ── Background scroll lock ──────────────────────────────────
    Without this the page scrolled behind every open drawer/modal. */
-var LOCK_IDS = ["cart", "side-panel", "checkout-veil", "success-veil", "track-veil", "inv-veil"];
+var LOCK_IDS = ["cart", "side-panel", "modal-veil", "checkout-veil", "success-veil", "track-veil", "inv-veil"];
 function syncOverlayLock() {
     var open = LOCK_IDS.some(function (id) {
         var el = $(id);
@@ -115,6 +115,30 @@ function syncOverlayLock() {
     });
     document.documentElement.classList.toggle("ovl-open", open);
     document.body.classList.toggle("ovl-open", open);
+
+    /* Lenis keeps consuming wheel events behind the veil even though
+       html{overflow:hidden} makes window.scrollTo() a no-op — its internal
+       animatedScroll drifts and the page snaps on close. Park it instead. */
+    if (window.lenis) {
+        if (open) {
+            window.lenis.stop();
+        } else {
+            window.lenis.start();
+            window.lenis.resize();
+        }
+    }
+}
+
+/* Panes that scroll inside an overlay. Lenis checks the event's composed
+   path for data-lenis-prevent and bails out before preventDefault(), so
+   native scrolling works inside these — even while Lenis is stopped. */
+var LENIS_PANES = ["#cart-body", ".sp-body", ".modal-info", "#modal", "#checkout-box", "#success-box", "#track-box", "#inv-box"];
+function tagLenisPanes() {
+    LENIS_PANES.forEach(function (sel) {
+        document.querySelectorAll(sel).forEach(function (el) {
+            el.setAttribute("data-lenis-prevent", "");
+        });
+    });
 }
 
 /* ── Motion helpers ─────────────────────────────── */
@@ -215,7 +239,7 @@ function bumpCartIcon() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    renderBadge(); makeSparks(); initReveal(); initScrollFx();
+    renderBadge(); makeSparks(); initReveal(); initScrollFx(); tagLenisPanes();
     buildOfferSlider();                       // hard-coded slides until sheet data arrives
     window.addEventListener("hashchange", handleRoute);
     if ($("product-grid")) loadData();
