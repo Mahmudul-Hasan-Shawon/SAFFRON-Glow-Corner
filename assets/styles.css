@@ -5664,7 +5664,7 @@ body {
     color: var(--slate);
     font-weight: 600;
     font-size: 14px;
-    padding: 1px 15px;
+    padding: 1px 9px;
     border-radius: 999px;
     box-shadow: 0 3px 10px -6px rgba(159, 18, 57, .25);
 }
