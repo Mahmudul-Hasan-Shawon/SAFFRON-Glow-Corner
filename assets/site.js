@@ -268,6 +268,9 @@ document.addEventListener("DOMContentLoaded", function () {
 function fetchJson(url, opts, ms) {
     opts = opts || {};
     opts.redirect = "follow";
+    // Always bypass the browser HTTP cache for API calls so edits to
+    // the Google Sheet show up on the next load, not a stale copy.
+    opts.cache = opts.cache || "no-store";
     ms = ms || 25000;
     var ctl = ("AbortController" in window) ? new AbortController() : null;
     if (ctl) opts.signal = ctl.signal;
