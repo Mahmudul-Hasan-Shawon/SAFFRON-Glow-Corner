@@ -2,7 +2,7 @@
    Caches static assets (CSS, JS, fonts, icons, logos, hero images)
    for instant repeat visits. Bump CACHE when you ship any change. */
 
-var CACHE = "sgc-static-v1";
+var CACHE = "sgc-static-v2";
 
 var CORE = [
     "./",
