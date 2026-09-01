@@ -194,7 +194,7 @@ function makeSparks() {
 }
 
 function initScrollFx() {
-    var bar = $("scroll-bar"), nav = $("navbar"), top = $("to-top"), ticking = false;
+    var bar = $("scroll-bar"), nav = $("navbar"), top = $("to-top"), ticking = false, lastY = 0;
     if (!bar || !nav || !top) return;
     function onScroll() {
         if (ticking) return; ticking = true;
@@ -203,7 +203,9 @@ function initScrollFx() {
             var max = document.documentElement.scrollHeight - window.innerHeight;
             bar.style.width = (max > 0 ? (y / max) * 100 : 0) + "%";
             nav.classList.toggle("stuck", y > 24);
-            top.classList.toggle("on", y > 620);
+            var scrollingUp = y < lastY;
+            top.classList.toggle("on", y > 620 && scrollingUp);
+            lastY = y;
             ticking = false;
         });
     }
