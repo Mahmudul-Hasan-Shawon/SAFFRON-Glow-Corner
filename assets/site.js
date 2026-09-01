@@ -431,12 +431,23 @@ function buildPills() {
 
 function setCat(cat) {
     if (PP_PROD) exitProductView(false);
+    resetHomeHash();
     ACTIVE_CAT = cat;
     document.querySelectorAll(".pill").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-cat") === cat); });
     applyFilters(); updateClearFilterBtn();
 }
+/* Point the URL back to the home route (#home) without leaving an
+   extra history entry, so the bar shows home after exiting the
+   product view. No-op when there's no product hash to remove. */
+function resetHomeHash() {
+    if (!/^#product-\d+$/.test(location.hash || "")) return;
+    if (history.replaceState) history.replaceState(null, "", location.pathname + location.search + "#home");
+    else location.hash = "home";
+}
+
 function scrollToShop() {
     if (PP_PROD) exitProductView(false);
+    resetHomeHash();
     if ($("shop")) { $("shop").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth" }); }
     else { window.location.href = "index.html#shop"; }
 }
@@ -502,7 +513,7 @@ function selectBrand(brand) {
 }
 
 function selectCategory(cat) { setCat(cat); closeSidePanel(); scrollToShop(); }
-function onSearch() { if (PP_PROD) exitProductView(true); SEARCH = $("search-inp").value.toLowerCase().trim(); applyFilters(); updateClearFilterBtn(); }
+function onSearch() { if (PP_PROD) exitProductView(true); resetHomeHash(); SEARCH = $("search-inp").value.toLowerCase().trim(); applyFilters(); updateClearFilterBtn(); }
 function updateClearFilterBtn() { $("search-wrap").classList.toggle("has-filter", !!SEARCH || ACTIVE_CAT !== "All"); }
 function clearFilter() { $("search-inp").value = ""; SEARCH = ""; setCat("All"); updateClearFilterBtn(); }
 
