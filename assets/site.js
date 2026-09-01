@@ -241,6 +241,13 @@ function bumpCartIcon() {
 document.addEventListener("DOMContentLoaded", function () {
     renderBadge(); makeSparks(); initReveal(); initScrollFx(); tagLenisPanes();
     buildOfferSlider();                       // hard-coded slides until sheet data arrives
+    /* Offline-friendly asset cache. Safe to ignore when SW is
+       unsupported/unavailable — the site just loads normally. */
+    if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+            navigator.serviceWorker.register("./sw.js").catch(function () { /* ignored */ });
+        });
+    }
     window.addEventListener("hashchange", handleRoute);
     if ($("product-grid")) loadData();
     if ($("gallery-grid")) initGallery();
@@ -283,21 +290,54 @@ function fetchJson(url, opts, ms) {
         });
 }
 
+/* Shop data comes from a single Google Apps Script fetch. Bump this
+   version whenever the shape of the cached payload changes so old
+   browsers don't keep serving stale structure. */
+var SHOP_CACHE_KEY = "sgc_shop_v1";
+
 function loadData() {
-    show("loading-state"); hide("error-state"); hide("empty-state"); hide("product-grid");
+    hide("error-state"); hide("empty-state"); hide("product-grid");
+
+    // 1. Instant paint from cache — no spinner so returning users see
+    //    the shop immediately instead of a flashing loader.
+    var cached = null;
+    try { cached = JSON.parse(lsGet(SHOP_CACHE_KEY) || "null"); } catch (e) { cached = null; }
+    var hasCache = !!(cached && Array.isArray(cached.products) && cached.products.length);
+    if (hasCache) {
+        applyShopData(cached.products, cached.config, cached.offers, false);
+    } else {
+        show("loading-state");
+    }
+
+    // 2. Fetch fresh data in the background, then refresh cache + DOM.
     fetchJson(API_URL + "?action=getAll").then(function (d) {
-        ALL = (d && d.products) || [];
-        CFG = (d && d.config) || { totalProducts: 13 };
-        if (!CFG.totalProducts || CFG.totalProducts < 1) CFG.totalProducts = 13;
-        OFFERS = (d && d.offers !== undefined) ? d.offers : null;
-        applyConfig(); buildPills(); reconcileCart(); applyFilters(); hide("loading-state");
-        initOffers();
-        handleRoute();   // someone may have opened/shared a #product-N link directly
+        var fresh = { products: (d && d.products) || [], config: (d && d.config) || {}, offers: (d && d.offers !== undefined) ? d.offers : null };
+        lsSet(SHOP_CACHE_KEY, JSON.stringify(fresh));
+        applyShopData(fresh.products, fresh.config, fresh.offers, true);
     }).catch(function (e) {
+        // Cache already served: keep the shop up and quietly note the miss.
+        if (hasCache) return;
         hide("loading-state");
         $("err-msg").textContent = (e && e.message) || "Connection failed.";
         show("error-state");
     });
+}
+
+/* Applies a resolved-to-shape data set. `fromCache` lets us skip the
+   spinner vanish (already handled by us on the network path) and only
+   re-render when something actually changed, avoiding flicker on
+   repeat visits. The loading box always gets hidden — a visible cache
+   paint must never sit underneath the default-on spinner. */
+function applyShopData(products, config, offers, fromNetwork) {
+    ALL = products || [];
+    CFG = config || { totalProducts: 13 };
+    if (!CFG.totalProducts || CFG.totalProducts < 1) CFG.totalProducts = 13;
+    OFFERS = (offers !== undefined) ? offers : null;
+
+    hide("loading-state");
+    applyConfig(); buildPills(); reconcileCart(); applyFilters();
+    initOffers();
+    handleRoute();   // someone may have opened/shared a #product-N link directly
 }
 
 // Silent refresh so stock levels reflect a just-placed order.
