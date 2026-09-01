@@ -5542,9 +5542,9 @@ body {
 }
 
 .pp-desc {
-    background: var(--white);
+    background: var(--bdr);
     border: 1px solid var(--bdr);
-    border-left: 4px solid var(--rose);
+    /* border-left: 4px solid var(--rose); */
     border-radius: 16px;
     padding: 24px 28px;
     color: #44403C;
@@ -5681,8 +5681,8 @@ body {
     display: flex;
     align-items: flex-start;
     gap: 11px;
-    background: var(--white);
-    /* border: 1px solid var(--bdr); */
+    /* background: var(--white); */
+    border: 1px solid var(--bdr);
     /* border-radius: 12px; */
     padding: 1px 8px;
     font-size: 15px;
@@ -5748,7 +5748,7 @@ body {
 }
 
 .pd-faq-item {
-    background: var(--white);
+    /* background: var(--white); */
     border: 1px solid var(--bdr);
     border-radius: 13px;
     overflow: hidden;
