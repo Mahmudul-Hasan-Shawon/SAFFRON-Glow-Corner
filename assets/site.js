@@ -436,18 +436,19 @@ function setCat(cat) {
     document.querySelectorAll(".pill").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-cat") === cat); });
     applyFilters(); updateClearFilterBtn();
 }
-/* Point the URL back to the home route (#home) without leaving an
-   extra history entry, so the bar shows home after exiting the
-   product view. No-op when there's no product hash to remove. */
-function resetHomeHash() {
-    if (!/^#product-\d+$/.test(location.hash || "")) return;
-    if (history.replaceState) history.replaceState(null, "", location.pathname + location.search + "#home");
-    else location.hash = "home";
+/* Point the URL back to a given home route without leaving an extra
+   history entry, so the bar reflects where the shopper landed after
+   exiting the product view. No-op when there's no product hash yet. */
+function resetHomeHash(target) {
+    target = target || "home";
+    if (!/^#product-\d+$/.test(location.hash || "") && location.hash !== "#" + target) return;
+    if (history.replaceState) history.replaceState(null, "", location.pathname + location.search + "#" + target);
+    else location.hash = target;
 }
 
 function scrollToShop() {
     if (PP_PROD) exitProductView(false);
-    resetHomeHash();
+    resetHomeHash("shop");
     if ($("shop")) { $("shop").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth" }); }
     else { window.location.href = "index.html#shop"; }
 }
