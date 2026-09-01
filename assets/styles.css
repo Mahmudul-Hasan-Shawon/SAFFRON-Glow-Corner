@@ -3636,6 +3636,10 @@ a:focus-visible,
 }
 
 .footer-credit {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-top: 1px solid rgba(255, 255, 255, .06);
     padding: 18px 28px calc(18px + env(safe-area-inset-bottom));
     text-align: center;
@@ -3649,6 +3653,13 @@ a:focus-visible,
     text-transform: uppercase;
     color: rgba(255, 255, 255, .28);
     font-weight: 500
+}
+
+.footer-credit-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px
 }
 
 .footer-credit strong {
@@ -5542,7 +5553,7 @@ body {
 }
 
 .pp-desc {
-    background: var(--bdr);
+    background: #f5eaf8;
     border: 1px solid var(--bdr);
     /* border-left: 4px solid var(--rose); */
     border-radius: 16px;
