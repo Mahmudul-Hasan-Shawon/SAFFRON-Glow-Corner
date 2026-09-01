@@ -296,17 +296,16 @@ function fetchJson(url, opts, ms) {
 var SHOP_CACHE_KEY = "sgc_shop_v1";
 
 function loadData() {
-    hide("error-state"); hide("empty-state"); hide("product-grid");
+    hide("error-state"); hide("empty-state");
+    hide("loading-state");   // never show the spinner — data fills in silently
+    hide("product-grid");
 
-    // 1. Instant paint from cache — no spinner so returning users see
-    //    the shop immediately instead of a flashing loader.
+    // 1. Instant paint from cache for returning users.
     var cached = null;
     try { cached = JSON.parse(lsGet(SHOP_CACHE_KEY) || "null"); } catch (e) { cached = null; }
     var hasCache = !!(cached && Array.isArray(cached.products) && cached.products.length);
     if (hasCache) {
         applyShopData(cached.products, cached.config, cached.offers, false);
-    } else {
-        show("loading-state");
     }
 
     // 2. Fetch fresh data in the background, then refresh cache + DOM.
@@ -317,7 +316,6 @@ function loadData() {
     }).catch(function (e) {
         // Cache already served: keep the shop up and quietly note the miss.
         if (hasCache) return;
-        hide("loading-state");
         $("err-msg").textContent = (e && e.message) || "Connection failed.";
         show("error-state");
     });
