@@ -436,12 +436,13 @@ function setCat(cat) {
     document.querySelectorAll(".pill").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-cat") === cat); });
     applyFilters(); updateClearFilterBtn();
 }
-/* Point the URL back to a given home route without leaving an extra
-   history entry, so the bar reflects where the shopper landed after
-   exiting the product view. No-op when there's no product hash yet. */
+/* Point the URL at a given route without leaving an extra history
+   entry, so the bar reflects where the shopper is after leaving the
+   product view (or clicking a home nav control). */
 function resetHomeHash(target) {
     target = target || "home";
-    if (!/^#product-\d+$/.test(location.hash || "") && location.hash !== "#" + target) return;
+    var current = location.hash;
+    if (current === "#" + target) return;
     if (history.replaceState) history.replaceState(null, "", location.pathname + location.search + "#" + target);
     else location.hash = target;
 }
