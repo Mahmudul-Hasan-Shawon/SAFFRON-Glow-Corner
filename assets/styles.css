@@ -1078,6 +1078,14 @@ a:focus-visible,
     color: #fff !important;
 }
 
+.hero-btn .fa-whatsapp {
+    color: #22C55E
+}
+
+.hero-btn:hover .fa-whatsapp {
+    color: #fff
+}
+
 .hero-btn-ghost {
     position: relative;
     display: inline-flex;
@@ -1790,7 +1798,7 @@ a:focus-visible,
 }
 
 .cart-head h3 {
-    font-family: var(--ff-serif);
+    font-family: 'Poppins', sans-serif;
     font-size: 28px;
     font-weight: 600;
     color: var(--ink)
@@ -1975,6 +1983,14 @@ a:focus-visible,
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    margin-bottom: 4px
+}
+
+.ci-size {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--slate);
+    letter-spacing: .3px;
     margin-bottom: 4px
 }
 
@@ -2861,7 +2877,7 @@ a:focus-visible,
 }
 
 .track-title {
-    font-family: var(--ff-serif);
+    font-family: var(--ff-sans);
     font-size: 30px;
     font-weight: 600;
     color: var(--ink)
@@ -4689,7 +4705,7 @@ a:focus-visible,
 }
 
 .contact-info-card h3 {
-    font-family: var(--ff-serif);
+    font-family: var(--ff-sans);
     font-size: 26px;
     margin-bottom: 10px;
     position: relative
@@ -4744,11 +4760,12 @@ a:focus-visible,
     background: rgba(255, 255, 255, .8);
     border: 1px solid var(--bdr);
     border-radius: var(--r-xl);
-    padding: 38px 34px
+    padding: 38px 34px;
+    box-shadow: var(--sh-lg)
 }
 
 .contact-form-card h3 {
-    font-family: var(--ff-serif);
+    font-family: var(--ff-sans);
     font-size: 26px;
     color: var(--ink);
     margin-bottom: 6px
@@ -5385,9 +5402,7 @@ body {
 }
 
 .pp-sku {
-    color: var(--slate);
-    font-size: 12.5px;
-    margin-bottom: 16px;
+    display: none;
 }
 
 .pp-price-row {
@@ -5690,7 +5705,7 @@ body {
     align-items: flex-start;
     gap: 11px;
     /* background: var(--white); */
-    border: 1px solid var(--bdr);
+    /* border: 1px solid var(--bdr); */
     /* border-radius: 12px; */
     padding: 1px 8px;
     font-size: 15px;

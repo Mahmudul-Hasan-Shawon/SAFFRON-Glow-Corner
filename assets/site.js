@@ -839,6 +839,7 @@ function renderDescription(p) {
     });
 
     parsed.sections.forEach(function (s) {
+        if (s.label && s.label.toLowerCase() === "title") return;
         var type = s.def ? s.def.type : "text";
         var icon = s.def ? s.def.icon : "fa-solid fa-circle-info";
         var body = "";
@@ -871,7 +872,7 @@ function renderDescription(p) {
             var steps = descItems(s.lines, false);
             if (!steps.length) return;
             body = '<ol class="pd-steps">' + steps.map(function (x, i) {
-                return '<li><span class="pd-step-no">' + (i + 1) + "</span><span>" + esc(x) + "</span></li>";
+                return '<li><span>' + esc(x) + "</span></li>";
             }).join("") + "</ol>";
         } else if (type === "faq") {
             var pairs = descFaqPairs(s.lines);
@@ -1009,7 +1010,9 @@ function renderCartUI() {
     var h = "";
     CART.forEach(function (i) {
         h += '<div class="ci" data-id="' + i.id + '"><img class="ci-img" src="' + esc(i.imageUrl) + '" alt="' + esc(i.title) + '" onerror="this.onerror=null;this.src=\'' + IMGS.d + '\'"/>';
-        h += '<div class="ci-info"><p class="ci-name">' + esc(i.title) + '</p><p><span class="ci-price">' + fmt(i.offerPrice) + '</span>';
+        h += '<div class="ci-info"><p class="ci-name">' + esc(i.title) + '</p>';
+        if (i.size) h += '<p class="ci-size">' + esc(i.size) + '</p>';
+        h += '<p><span class="ci-price">' + fmt(i.offerPrice) + '</span>';
         if (i.hasDiscount) h += '<span class="ci-price-old">' + fmt(i.oldPrice) + '</span>';
         h += '</p><div class="ci-row"><button class="q-btn" aria-label="Decrease quantity" onclick="changeQty(' + i.id + ',-1)">\u2212</button><span class="q-n">' + i.qty + '</span><button class="q-btn" aria-label="Increase quantity" onclick="changeQty(' + i.id + ',1)">+</button><button class="ci-rm" onclick="removeItem(' + i.id + ')">Remove</button></div></div>';
         h += '<span class="ci-tot">' + fmt(i.offerPrice * i.qty) + '</span></div>';
