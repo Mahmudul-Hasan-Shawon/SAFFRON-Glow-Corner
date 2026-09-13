@@ -34,33 +34,85 @@
     position: relative;
     z-index: 2;
     width: 100%;
-    max-width: 1200px;
+    max-width: 1320px;
     margin: 0 auto;
-    padding: 140px 48px 90px;
+    padding: 0 28px 80px;
 }
 
 .hero-cover-inner .hero-copy {
+    max-width: 860px;
+    margin: 0;
+    text-align: left;
+}
+
+/* Prominent hero type — Poppins, centered, with generous spacing so each
+   block (eyebrow → title → sub → marquee → buttons) reads clearly. */
+.hero-cover .hero-title {
+    font-family: 'Cinzel', var(--ff-serif);
+    font-size: clamp(44px, 7.5vw, 96px);
+    font-weight: 600;
+    line-height: 1.22;
+    letter-spacing: .02em;
+    margin: 0 0 18px;
+    text-shadow: 0 4px 30px rgba(0, 0, 0, .35);
+}
+
+.hero-cover .hero-title-accent {
+    display: block;
+    margin-top: 8px;
+    color: var(--gold);
+    font-family: 'Playfair Display', var(--ff-serif);
+    font-weight: 600;
+    font-style: italic;
+    letter-spacing: 0;
+}
+
+.hero-cover .hero-eyebrow {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    padding: 8px 18px;
+    margin: 0 0 32px;
+    width: fit-content;
+    border: none;
+    background: none;
+    border-radius: 0;
+}
+
+.hero-cover .hero-sub {
+    font-family: 'Manrope', var(--ff-sans);
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.75;
     max-width: 560px;
+    margin: 0 0 44px;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, .4);
+}
+
+@media (max-width: 700px) {
+    .hero-cover .hero-title {
+        font-size: clamp(36px, 11.5vw, 52px);
+        letter-spacing: .01em;
+    }
+
+    .hero-cover .hero-sub {
+        font-size: 16px;
+        max-width: none;
+    }
 }
 
 .hero-cover .hero-eyebrow,
 .hero-cover .hero-title,
-.hero-cover .hero-title em,
+.hero-cover .hero-title-accent,
 .hero-cover .hero-sub {
     color: #fff;
     text-align: left;
 }
 
-.hero-cover .hero-eyebrow {
-    margin-bottom: 22px;
-}
-
-.hero-cover .hero-sub {
-    margin: 22px 0 34px;
-}
-
 .hero-cover .hero-btn-row {
     justify-content: flex-start;
+    margin-top: 8px;
 }
 
 .hero-cover .hero-btn-ghost {
@@ -73,22 +125,157 @@
     background: rgba(255, 255, 255, .12);
 }
 
+/* ---------- Hero brand marquee ---------- */
+/* Spacing from the sub-paragraph above it (masks the earlier margin reset). */
+.hero-cover .hero-sub {
+    margin-bottom: 40px;
+}
+
+.hero-brands {
+    overflow: hidden;
+    width: 100%;
+    max-width: 860px;
+    margin: 0 0 40px;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+
+.hero-brands-track {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: max-content;
+    animation: heroMarquee 140s linear infinite;
+}
+
+.hero-brands:hover .hero-brands-track {
+    animation-play-state: paused;
+}
+
+.hero-brand-logo {
+    height: 58px;
+    width: auto;
+    max-width: 170px;
+    object-fit: contain;
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
+    flex: 0 0 auto;
+    filter: none;
+    opacity: 1;
+}
+
+@keyframes heroMarquee {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hero-brands-track {
+        animation: none;
+        flex-wrap: wrap;
+        width: auto;
+        justify-content: center;
+    }
+
+    .hero-brands {
+        -webkit-mask-image: none;
+        mask-image: none;
+    }
+}
+
+/* ---------- Mobile/tablet: center the whole hero copy ---------- */
+@media (max-width: 1024px) {
+    .hero-cover-inner .hero-copy {
+        margin: 0 auto;
+        text-align: center;
+    }
+
+    .hero-cover .hero-eyebrow,
+    .hero-cover .hero-title,
+    .hero-cover .hero-title-accent,
+    .hero-cover .hero-sub {
+        text-align: center;
+    }
+
+    .hero-cover .hero-eyebrow {
+        margin-left: auto;
+        margin-right: auto;
+        font-size: 9.5px;
+        padding: 7px 14px;
+    }
+
+    .hero-cover .hero-sub {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .hero-cover .hero-btn-row {
+        justify-content: center;
+    }
+
+    .hero-brands {
+        width: 100vw;
+        max-width: none;
+        margin-left: calc(50% - 50vw);
+        margin-right: calc(50% - 50vw);
+    }
+
+    .hero-brand-logo {
+        height: 44px;
+        max-width: 130px;
+        opacity: 1;
+    }
+}
+
+/* ---------- Mobile: constrain the hero to the space between the fixed top
+   nav (nav-main) and the mobile bottom nav (mbn) — never taller. ---------- */
+@media (max-width: 1024px) {
+    #hero.hero-cover {
+        min-height: calc(100svh - 156px);
+        min-height: calc(100vh - 156px);
+    }
+}
+
 @media (max-width: 700px) {
     #hero.hero-cover {
-        min-height: 92vh;
+        min-height: calc(100svh - 156px);
+        min-height: calc(100vh - 156px);
         /* Square, lighter crop made for phones — swapped per-breakpoint so
            the desktop image is never downloaded on mobile (and vice versa). */
         background-image: url('/images/hero/hero2.jpg');
     }
 
     .hero-cover-inner {
-        padding: 120px 24px 70px;
+        padding: 24px 24px 60px;
     }
 
     /* Left-to-right desktop gradient doesn't protect the copy on a square
        crop — stack it vertically instead. */
     .hero-cover-overlay {
         background: linear-gradient(180deg, rgba(16, 14, 30, .55) 0%, rgba(16, 14, 30, .78) 100%);
+    }
+}
+
+/* ---------- Auto-hide navbar ----------
+   Toggled by scrollfx: tuck the bar away while scrolling down, ease it
+   back in on the first upward scroll (or near the top). */
+#navbar {
+    transition: box-shadow .4s var(--e-silk), background .4s var(--e-silk), transform .42s var(--e-silk, cubic-bezier(.22, 1, .36, 1));
+}
+
+#navbar.nav-hidden {
+    transform: translateY(-100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #navbar.nav-hidden {
+        transition: none;
     }
 }
 
@@ -438,6 +625,249 @@
 .mbn-cat-pills .sp-pill:nth-child(6) { animation-delay: .24s }
 .mbn-cat-pills .sp-pill:nth-child(n+7) { animation-delay: .28s }
 
+/* ---------- Navbar: hamburger + full-screen menu overlay (touch/tablet) ---------- */
+.nav-hamburger {
+    display: none;
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--bdr);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .6);
+    color: var(--rose-d);
+    cursor: pointer;
+    transition: border-color .25s ease, background .25s ease, box-shadow .25s ease;
+}
+
+.nav-hamburger:hover {
+    border-color: var(--rose-m);
+    background: #fff;
+    box-shadow: var(--sh-sm);
+}
+
+.nav-hamburger-bar {
+    display: block;
+    width: 17px;
+    height: 2px;
+    border-radius: 99px;
+    background: currentColor;
+    transition: transform .32s var(--e-silk, cubic-bezier(.22, 1, .36, 1));
+}
+
+.nav-hamburger.open .nav-hamburger-bar:first-child {
+    transform: translateY(3.5px) rotate(45deg);
+}
+
+.nav-hamburger.open .nav-hamburger-bar:last-child {
+    transform: translateY(-3.5px) rotate(-45deg);
+}
+
+/* Full-screen red overlay, revealed with a clip-path wipe from the bottom. */
+.nav-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 261;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(165deg, #8E1133, #C0153E 45%, #E11D48);
+    visibility: hidden;
+    clip-path: inset(0 0 100% 0);
+    transition: clip-path .55s var(--e-silk, cubic-bezier(.22, 1, .36, 1)), visibility 0s .55s;
+    padding: max(18px, env(safe-area-inset-top)) clamp(24px, 6vw, 56px) calc(22px + env(safe-area-inset-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.nav-drawer.on {
+    visibility: visible;
+    clip-path: inset(0 0 0% 0);
+    transition: clip-path .55s var(--e-silk, cubic-bezier(.22, 1, .36, 1));
+}
+
+.nav-drawer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.nav-drawer-head .display-logo {
+    color: #fff;
+}
+
+.nav-drawer-close {
+    width: 42px;
+    height: 42px;
+    border: 1px solid rgba(255, 255, 255, .4);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .14);
+    color: #fff;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--tr, .2s);
+}
+
+.nav-drawer-close:hover {
+    background: rgba(255, 255, 255, .3);
+}
+
+/* Centered display links, white on red. */
+.nav-drawer-links {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.nav-drawer-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 18px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    text-align: center;
+    color: #fff;
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-size: clamp(1.55rem, 6.5vw, 2.4rem);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: .02em;
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity .45s ease, transform .45s var(--e-silk, cubic-bezier(.22, 1, .36, 1)), color .25s ease;
+}
+
+.nav-drawer.on .nav-drawer-link {
+    opacity: 1;
+    transform: none;
+}
+
+.nav-drawer-link:hover {
+    color: var(--gold);
+    transform: translateY(-2px);
+}
+
+.nav-drawer-link.on {
+    color: var(--gold);
+}
+
+.nav-drawer-foot {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, .22);
+}
+
+.nav-drawer-contact {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+}
+
+.nav-drawer-contact-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    width: fit-content;
+    color: rgba(255, 255, 255, .88);
+    font-size: 13px;
+    transition: color .25s ease;
+}
+
+.nav-drawer-contact-link:hover {
+    color: #fff;
+}
+
+.nav-drawer-contact-link i {
+    color: var(--gold);
+    font-size: 13px;
+}
+
+.nav-drawer-social {
+    display: flex;
+    gap: 10px;
+}
+
+.nav-drawer-social-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, .28);
+    border-radius: 50%;
+    background: none;
+    color: rgba(255, 255, 255, .8);
+    font-size: 15px;
+    transition: border-color .3s ease, color .3s ease, background .3s ease, transform .3s ease;
+}
+
+.nav-drawer-social-btn:hover {
+    border-color: rgba(255, 255, 255, .55);
+    color: #fff;
+    background: rgba(255, 255, 255, .12);
+    transform: translateY(-2px);
+}
+
+.nav-drawer-legal {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 7px 16px;
+}
+
+.nav-drawer-legal-link {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, .7);
+    transition: color .25s ease;
+}
+
+.nav-drawer-legal-link:hover {
+    color: #fff;
+}
+
+.nav-drawer-copy {
+    color: rgba(255, 255, 255, .45);
+    font-size: 12px;
+    margin-left: 9px;
+}
+
+/* Desktop keeps the centered links + compact search — no hamburger/drawer. */
+@media (min-width: 1025px) {
+    .nav-hamburger,
+    .nav-drawer {
+        display: none;
+    }
+}
+
+@media (max-width: 1024px) {
+    .nav-hamburger {
+        display: flex;
+    }
+}
+
 /* ---------- Page transition ----------
    <main> is keyed by pageKey in App.tsx, so this entrance animation
    replays on every route change. */
@@ -447,6 +877,13 @@ main {
 
 #product-page {
     animation: pageIn .5s var(--e-silk, cubic-bezier(.22, 1, .36, 1)) both;
+}
+
+/* Less breathing room above the product content on phone/tablet. */
+@media (max-width: 860px) {
+    #product-page {
+        padding-top: 48px;
+    }
 }
 
 @keyframes pageIn {
@@ -817,8 +1254,7 @@ main {
         opacity: .92;
     }
 
-    .add-btn:active,
-    .card-quick:active {
+    .add-btn:active {
         transform: scale(.88);
     }
 
@@ -1428,4 +1864,10 @@ main {
 .cat-dd-menu::-webkit-scrollbar-thumb:hover,
 .nav-dd-menu::-webkit-scrollbar-thumb:hover {
     background: rgba(128, 90, 60, .6);
+}
+
+/* Slimmer under-logo search (phone/tablet) so the bar looks less chunky. */
+.search-input-box input {
+    padding: 6px 14px 6px 38px;
+    font-size: 13px;
 }

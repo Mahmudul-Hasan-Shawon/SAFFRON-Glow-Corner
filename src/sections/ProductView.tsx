@@ -263,10 +263,6 @@ export function ProductView() {
   return (
     <section id="product-page">
       <div className="pp-inner">
-        <button className="pp-back" type="button" onClick={closeProduct}>
-          <i className="fa-solid fa-arrow-left" /> Back to Shop
-        </button>
-
         <nav className="pp-crumb" aria-label="Breadcrumb">
           <button type="button" className="pp-crumb-link" onClick={closeProduct}>Shop</button>
           <i className="fa-solid fa-angle-right" />

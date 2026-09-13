@@ -47,15 +47,6 @@ export function ProductCard({ p, delay = 0 }: { p: Product; delay?: number }) {
             <span className="badge badge-low">Low Stock</span>
           ) : null}
         </div>
-        <button
-          className="card-quick"
-          aria-label="Add to bag"
-          type="button"
-          onClick={quickAdd}
-          disabled={out}
-        >
-          <i className="fa-solid fa-cart-plus" />
-        </button>
       </div>
       <div className="card-body">
         <span className="card-brand">{p.brand}</span>

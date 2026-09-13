@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { site } from '../../data/site'
 import { useShop } from '../../store/shop'
 import { REDUCED_MOTION } from '../../utils/feedback'
 import { enableMenuScroll } from '../../utils/menuScroll'
+import { syncOverlayLock } from '../../utils/overlay'
+import { mountFocusTrap } from '../../utils/focusTrap'
 
 interface NavbarProps {
   activePath: string
@@ -25,7 +28,9 @@ export function Navbar({ activePath, onNavigate, onTrack }: NavbarProps) {
   } = useShop()
   const navRef = useRef<HTMLElement>(null)
   const megaMenuRef = useRef<HTMLDivElement>(null)
+  const drawerRef = useRef<HTMLDivElement>(null)
   const [megaOpen, setMegaOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const isHome = activePath === '/'
 
   const cats = useMemo(() => {
@@ -58,6 +63,20 @@ export function Navbar({ activePath, onNavigate, onTrack }: NavbarProps) {
 
   useEffect(() => enableMenuScroll(megaMenuRef.current), [])
 
+  /* Hamburger drawer: scroll lock, focus trap, Escape to close. */
+  useEffect(() => {
+    if (!menuOpen) return
+    syncOverlayLock()
+    const untrap = mountFocusTrap(drawerRef.current)
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      untrap?.()
+      syncOverlayLock()
+    }
+  }, [menuOpen])
+
   const goShop = (delay = 0) => {
     window.setTimeout(() => {
       const shop = document.getElementById('shop')
@@ -77,6 +96,19 @@ export function Navbar({ activePath, onNavigate, onTrack }: NavbarProps) {
     if (productId) { closeProduct(); goShop(360); return }
     if (isHome) goShop(0)
     else onNavigate('/')
+  }
+
+  const goMenuHome = () => {
+    setMenuOpen(false)
+    if (productId) { closeProduct(); goShop(360); return }
+    if (!isHome) onNavigate('/')
+  }
+
+  const goMenuShop = () => {
+    setMenuOpen(false)
+    if (productId) { closeProduct(); goShop(360); return }
+    if (isHome) goShop(0)
+    else onNavigate('/#shop')
   }
 
   const hasFilter = !!search || catActive
@@ -204,6 +236,20 @@ export function Navbar({ activePath, onNavigate, onTrack }: NavbarProps) {
             <i className="fa-brands fa-whatsapp" />
           </a>
         </div>
+
+        {/* Hamburger — touch/tablet only (hidden ≥1025px in CSS). */}
+        <button
+          type="button"
+          className={menuOpen ? 'nav-hamburger open' : 'nav-hamburger'}
+          id="nav-hamburger"
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={menuOpen}
+          aria-controls="nav-drawer"
+          onClick={() => setMenuOpen((v) => !v)}
+        >
+          <span className="nav-hamburger-bar" />
+          <span className="nav-hamburger-bar" />
+        </button>
       </div>
 
       {/* Full-width mega menu — desktop only (hidden below 1025px in CSS). */}
@@ -245,6 +291,80 @@ export function Navbar({ activePath, onNavigate, onTrack }: NavbarProps) {
           </div>
         </div>
       </div>
+
+      {/* Full-screen menu overlay — touch/tablet only (hidden ≥1025px in CSS).
+          Portaled to the body so #navbar's backdrop-filter (a fixed-position
+          containing block) can't trap the overlay inside the header. */}
+      {createPortal(
+        <div
+          className={menuOpen ? 'nav-drawer on' : 'nav-drawer'}
+          id="nav-drawer"
+          ref={drawerRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menu"
+          aria-hidden={!menuOpen}
+          data-lenis-prevent
+        >
+        <div className="nav-drawer-head">
+          <span className="display-logo text-lg font-bold tracking-wide text-rose-d md:text-xl">SAFFRON<span className="text-gold">.</span></span>
+          <button type="button" className="nav-drawer-close" aria-label="Close menu" onClick={() => setMenuOpen(false)}>
+            <i className="fa fa-xmark" />
+          </button>
+        </div>
+
+        <nav className="nav-drawer-links" aria-label="Menu">
+          <button type="button" className="nav-drawer-link" onClick={goMenuHome}>
+            Home
+          </button>
+          <button type="button" className="nav-drawer-link" onClick={goMenuShop}>
+            Shop
+          </button>
+          {PAGES.map((l) => (
+            <button
+              key={l.href}
+              type="button"
+              className={activePath === l.href ? 'nav-drawer-link on' : 'nav-drawer-link'}
+              onClick={() => { setMenuOpen(false); onNavigate(l.href) }}
+            >
+              {l.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="nav-drawer-foot">
+          <div className="nav-drawer-contact">
+            <a href={`mailto:${site.email}`} className="nav-drawer-contact-link">
+              <i className="fa-regular fa-envelope" aria-hidden="true" />{site.email}
+            </a>
+            <a href={site.phoneHref} className="nav-drawer-contact-link">
+              <i className="fa-solid fa-phone" aria-hidden="true" />{site.phone}
+            </a>
+          </div>
+          <div className="nav-drawer-social">
+            <a href="https://www.instagram.com/glowsaffron7" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="nav-drawer-social-btn">
+              <i className="fa-brands fa-instagram" aria-hidden="true" />
+            </a>
+            <a href="https://www.facebook.com/glowsaffron7" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="nav-drawer-social-btn">
+              <i className="fa-brands fa-facebook-f" aria-hidden="true" />
+            </a>
+            <a href="https://x.com/glowsaffron7" target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="nav-drawer-social-btn">
+              <i className="fa-brands fa-x-twitter" aria-hidden="true" />
+            </a>
+            <a href="https://www.linkedin.com/company/saffron-glow-corner" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="nav-drawer-social-btn">
+              <i className="fa-brands fa-linkedin-in" aria-hidden="true" />
+            </a>
+          </div>
+          <div className="nav-drawer-legal">
+            <button type="button" className="nav-drawer-legal-link">Privacy Policy</button>
+            <button type="button" className="nav-drawer-legal-link">Terms of Service</button>
+            <button type="button" className="nav-drawer-legal-link">Cookie Policy</button>
+            <span className="nav-drawer-copy">© 2026 {site.name}</span>
+          </div>
+        </div>
+        </div>,
+        document.body,
+      )}
     </nav>
   )
 }
