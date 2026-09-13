@@ -823,93 +823,6 @@ a:focus-visible,
     transform: translateY(0)
 }
 
-.nav-cats {
-    max-width: 1320px;
-    margin: 0 auto;
-    padding: 0 28px 12px;
-    display: flex;
-    gap: 7px;
-    overflow-x: auto;
-    scrollbar-width: none
-}
-
-.nav-cats::-webkit-scrollbar {
-    display: none
-}
-
-.pill {
-    flex-shrink: 0;
-    padding: 7px 18px;
-    border-radius: 99px;
-    font-size: 12.5px;
-    font-weight: 600;
-    border: 1.5px solid var(--bdr);
-    background: rgba(255, 255, 255, .5);
-    color: var(--slate);
-    transition: var(--tr);
-    white-space: nowrap;
-    animation: pillIn .5s var(--e-silk) both
-}
-
-@keyframes pillIn {
-    from {
-        opacity: 0;
-        transform: translateY(8px)
-    }
-
-    to {
-        opacity: 1;
-        transform: none
-    }
-}
-
-.nav-cats .pill:nth-child(1) {
-    animation-delay: .02s
-}
-
-.nav-cats .pill:nth-child(2) {
-    animation-delay: .06s
-}
-
-.nav-cats .pill:nth-child(3) {
-    animation-delay: .1s
-}
-
-.nav-cats .pill:nth-child(4) {
-    animation-delay: .14s
-}
-
-.nav-cats .pill:nth-child(5) {
-    animation-delay: .18s
-}
-
-.nav-cats .pill:nth-child(6) {
-    animation-delay: .22s
-}
-
-.nav-cats .pill:nth-child(7) {
-    animation-delay: .26s
-}
-
-.nav-cats .pill:nth-child(n+8) {
-    animation-delay: .3s
-}
-
-.pill:hover {
-    border-color: var(--rose-m);
-    color: var(--rose-d);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px -8px rgba(184, 103, 79, .4)
-}
-
-.pill.on {
-    background: linear-gradient(135deg, var(--rose-d), var(--rose));
-    border-color: transparent;
-    color: #fff;
-    font-weight: 700;
-    box-shadow: 0 8px 20px -8px rgba(184, 103, 79, .6)
-}
-
 /* ── Hero ── */
 #hero {
     overflow: hidden;
@@ -4257,8 +4170,7 @@ a:focus-visible,
     }
 
     .nav-actions,
-    .nav-links,
-    .nav-cats {
+    .nav-links {
         display: none
     }
 

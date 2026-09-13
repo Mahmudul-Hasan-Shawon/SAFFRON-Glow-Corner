@@ -1,2 +1,6 @@
+# Cloudflare Pages configuration — React SPA deployed from the dist/ build.
+# Deploy with:
+#   npx wrangler pages deploy dist --project-name glowsaffron --branch main
 name = "glowsaffron"
-pages_build_output_dir = "."
+compatibility_date = "2025-01-01"
+pages_build_output_dir = "./dist"

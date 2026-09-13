@@ -416,15 +416,8 @@ function applyConfig() {
 }
 
 function buildPills() {
-    if (!$("cat-pills")) return;
     var cats = ["All"], seen = {};
     ALL.forEach(function (p) { if (p.category && !seen[p.category]) { cats.push(p.category); seen[p.category] = 1; } });
-    var h = "";
-    cats.forEach(function (c) {
-        h += '<button class="pill' + (c === "All" ? " on" : "") + '" data-cat="' + esc(c) +
-            '" onclick="setCat(\'' + jsStr(c) + '\')">' + esc(c) + '</button>';
-    });
-    $("cat-pills").innerHTML = h;
 
     buildCatDD();
     buildNavCatDD(cats);
@@ -540,7 +533,6 @@ function setCat(cat) {
     if (PP_PROD) exitProductView(false);
     resetHomeHash();
     ACTIVE_CAT = cat;
-    document.querySelectorAll(".pill").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-cat") === cat); });
     syncCatDD(); applyFilters(); updateClearFilterBtn();
 }
 /* Point the URL at a given route without leaving an extra history
@@ -617,7 +609,7 @@ function selectBrand(brand) {
     SEARCH = String(brand).toLowerCase().trim();
     $("search-inp").value = brand;
     ACTIVE_CAT = "All";
-    document.querySelectorAll(".pill").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-cat") === "All"); });
+    syncCatDD();
     applyFilters(); updateClearFilterBtn(); closeSidePanel(); scrollToShop();
 }
 
