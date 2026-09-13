@@ -143,26 +143,30 @@
 .hero-brands-track {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 0;
     width: max-content;
-    animation: heroMarquee 140s linear infinite;
+    /* Lazy, even drift — imperceptibly slow crawl */
+    animation: heroMarquee 480s linear infinite;
 }
 
 .hero-brands:hover .hero-brands-track {
     animation-play-state: paused;
 }
 
+/* Fixed-size cells (like h-14 w-20 mx-7) so every logo — wide or square —
+   occupies the same slot and the drift stays perfectly even. */
 .hero-brand-logo {
-    height: 58px;
-    width: auto;
-    max-width: 170px;
+    height: 56px;
+    width: 80px;
+    max-width: none;
+    margin: 0 28px;
     object-fit: contain;
     background: transparent;
     border-radius: 0;
     padding: 0;
     flex: 0 0 auto;
+    opacity: .95;
     filter: none;
-    opacity: 1;
 }
 
 @keyframes heroMarquee {
@@ -228,8 +232,8 @@
 
     .hero-brand-logo {
         height: 44px;
-        max-width: 130px;
-        opacity: 1;
+        width: 64px;
+        margin: 0 20px;
     }
 }
 
@@ -1870,4 +1874,208 @@ main {
 .search-input-box input {
     padding: 6px 14px 6px 38px;
     font-size: 13px;
+}
+
+/* Thin universal scrollbar on desktop — replaces the "hidden" bar that
+   vanilla.css sets ≥769px, applied everywhere (page + scrollable boxes). */
+@media (min-width: 769px) {
+    html {
+        scrollbar-width: thin;
+        scrollbar-color: var(--rose-m) var(--rose-s);
+        -ms-overflow-style: auto;
+    }
+
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--rose-s);
+    }
+
+    ::-webkit-scrollbar-button,
+    ::-webkit-scrollbar-button:single-button {
+        display: none;
+        width: 0;
+        height: 0;
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, var(--rose-m), var(--rose));
+        border-radius: 10px;
+    }
+
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+        display: block;
+    }
+}
+/* ═════════════════════════════════════════════════════════════
+   PRODUCT DETAILS — card-based redesign (overrides vanilla.css
+   .pp-desc/.pd-* styles; appended last so it wins the cascade)
+   ═════════════════════════════════════════════════════════════ */
+
+/* Container: the old flat pink slab becomes a neutral canvas that
+   lets each section read as its own full-width card. */
+.pp-desc {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    max-width: 900px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    align-items: start;
+}
+
+/* Section card */
+.pd-section {
+    margin: 0;
+    background: #fff;
+    border: 1px solid var(--bdr);
+    border-radius: 18px;
+    padding: 22px 24px;
+    height: 100%;
+    box-shadow: 0 1px 2px rgba(24, 18, 20, .04);
+    transition: box-shadow .3s var(--e-silk), transform .3s var(--e-silk), border-color .3s ease;
+}
+
+.pd-section:hover {
+    border-color: rgba(225, 29, 72, .22);
+    box-shadow: 0 14px 34px -18px rgba(159, 18, 57, .25);
+    transform: translateY(-2px);
+}
+
+/* Section header: quiet small-caps with a rose icon chip */
+.pd-title {
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--bdr);
+}
+
+.pd-title i {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(225, 29, 72, .09);
+    color: var(--rose);
+    font-size: 12px;
+}
+
+/* Body text */
+.pd-para {
+    font-size: 14.5px;
+    color: #57534E;
+}
+
+/* Pills */
+.pd-pill {
+    background: rgba(225, 29, 72, .06);
+    border-color: rgba(225, 29, 72, .18);
+    padding: 3px 12px;
+    font-size: 13px;
+}
+
+/* Benefits checklist — check in a soft green disc */
+.pd-list li {
+    padding: 0;
+    font-size: 14.5px;
+}
+
+.pd-list li i {
+    margin-top: 2px;
+    font-size: 12px;
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(22, 163, 74, .1);
+}
+
+/* How to Use — plain list, no numbered badges */
+.pd-steps {
+    counter-reset: pdstep;
+}
+
+.pd-steps li {
+    display: block;
+    font-size: 14.5px;
+}
+
+/* FAQ accordion — soft neutral rows, rose when open */
+.pd-faq-item {
+    background: #FAFAF9;
+}
+
+.pd-faq-item.open {
+    background: #fff;
+    border-color: rgba(225, 29, 72, .35);
+    box-shadow: 0 10px 26px -16px rgba(159, 18, 57, .35);
+}
+
+.pd-faq-q {
+    font-size: 14.5px;
+    padding: 13px 16px;
+}
+
+.pd-faq-q i {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(225, 29, 72, .09);
+    font-size: 10px;
+}
+
+.pd-faq-a p {
+    font-size: 14px;
+}
+
+@media (max-width: 860px) {
+    .pp-desc {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .pd-section {
+        padding: 18px;
+        border-radius: 14px;
+    }
+
+    .pd-title {
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+    }
+}
+
+/* Kill any horizontal page scrollbar caused by full-bleed strips
+   (hero brand marquee) — `clip` doesn't create a scroll container,
+   so smooth scrolling and fixed elements keep working. */
+html,
+body {
+    overflow-x: clip;
+}
+
+/* Fallback for older browsers that don't support overflow: clip */
+@supports not (overflow: clip) {
+
+    html,
+    body {
+        overflow-x: hidden;
+    }
 }

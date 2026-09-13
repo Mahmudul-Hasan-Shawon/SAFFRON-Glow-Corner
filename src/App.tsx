@@ -225,11 +225,6 @@ function Shell() {
       </main>
       <Footer onNavigate={navigate} onTrack={openTrack} />
 
-      <button id="to-top" title="Back to top" aria-label="Back to top"
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-        <i className="fa fa-arrow-up" />
-      </button>
-
       <MobileBottomNav activePath={path} onNavigate={navigate} onTrack={openTrack} />
 
       <CartDrawer />

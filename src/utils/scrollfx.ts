@@ -29,7 +29,7 @@ export function initScrollFx() {
       nav.classList.toggle('nav-hidden', hidden)
 
       const scrollingUp = y < lastY
-      top.classList.toggle('on', y > 620 && scrollingUp)
+      if (top) top.classList.toggle('on', y > 620 && scrollingUp)
       lastY = y
       ticking = false
     })

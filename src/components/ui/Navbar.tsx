@@ -153,9 +153,6 @@ export function Navbar({ activePath, onNavigate, onTrack }: NavbarProps) {
               />
               <i className="fa fa-magnifying-glass" />
             </div>
-            <button className="clear-filter-btn" id="clear-filter-btn" onClick={() => clearFilter()}>
-              <i className="fa fa-xmark" />Clear Filter
-            </button>
           </div>
         )}
 
