@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useShop } from '../../store/shop'
 import { fmt } from '../../lib/format'
 import { syncOverlayLock } from '../../utils/overlay'
+import { mountFocusTrap } from '../../utils/focusTrap'
 
 export function CartDrawer() {
   const { cartOpen, setCartOpen, cart, changeQty, removeItem, openProduct, openCheckout, closePanel } = useShop()
   const [removing, setRemoving] = useState<number | null>(null)
+  const asideRef = useRef<HTMLElement>(null)
 
   const sub = cart.reduce((n, i) => n + i.offerPrice * i.qty, 0)
 
@@ -13,6 +15,12 @@ export function CartDrawer() {
     if (cartOpen) closePanel()
     syncOverlayLock()
   }, [cartOpen, closePanel])
+
+  /* Move focus into the drawer while open, trap Tab, restore on close. */
+  useEffect(() => {
+    if (!cartOpen) return
+    return mountFocusTrap(asideRef.current)
+  }, [cartOpen])
 
   const tryRemove = (id: number) => {
     setRemoving(id)
@@ -25,7 +33,7 @@ export function CartDrawer() {
   return (
     <>
       <div id="cart-veil" className={cartOpen ? 'on' : ''} onClick={() => setCartOpen(false)} />
-      <aside id="cart" className={cartOpen ? 'on' : ''} aria-label="Shopping bag">
+      <aside id="cart" ref={asideRef} className={cartOpen ? 'on' : ''} role="dialog" aria-modal="true" aria-label="Shopping bag">
         <div className="cart-head">
           <h3>Shopping Bag</h3>
           <button className="icon-btn" type="button" aria-label="Close cart" onClick={() => setCartOpen(false)}>

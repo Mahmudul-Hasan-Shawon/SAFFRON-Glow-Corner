@@ -56,6 +56,7 @@ export function Footer({ onNavigate, onTrack }: FooterProps) {
               <li><a href="/" onClick={(e) => { e.preventDefault(); onNavigate('/') }}>All Products</a></li>
               <li><a href="/track" onClick={(e) => { e.preventDefault(); onTrack() }}>Track Order</a></li>
               <li><a href="/about" onClick={(e) => { e.preventDefault(); onNavigate('/about') }}>About Us</a></li>
+              <li><a href="/brands" onClick={(e) => { e.preventDefault(); onNavigate('/brands') }}>Brands</a></li>
               <li><a href="/contact" onClick={(e) => { e.preventDefault(); onNavigate('/contact') }}>Contact Us</a></li>
               <li><a href="/faq" onClick={(e) => { e.preventDefault(); onNavigate('/faq') }}>FAQ</a></li>
             </ul>

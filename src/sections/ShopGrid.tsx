@@ -5,7 +5,7 @@ import { observeNew } from '../utils/reveal'
 import { enableMenuScroll } from '../utils/menuScroll'
 
 export function ShopGrid() {
-  const { products, activeCat, setActiveCat, loadStatus, retry } = useShop()
+  const { products, activeCat, setActiveCat, loadStatus, retry, search } = useShop()
   const gridRef = useRef<HTMLDivElement>(null)
   const ddMenuRef = useRef<HTMLDivElement>(null)
   const [ddOpen, setDdOpen] = useState(false)
@@ -22,9 +22,18 @@ export function ShopGrid() {
   }, [products])
 
   const filtered = useMemo(() => {
-    if (activeCat === 'All') return products
-    return products.filter((p) => p.category === activeCat)
-  }, [products, activeCat])
+    const q = search.trim().toLowerCase()
+    return products.filter((p) => {
+      const inCat = activeCat === 'All' || p.category === activeCat
+      if (!inCat) return false
+      if (!q) return true
+      const hay = [p.title, p.brand, p.category, p.size, p.sku, p.description]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+      return hay.includes(q)
+    })
+  }, [products, activeCat, search])
 
   /* Cards mount after data arrives; arm the reveal observer on the grid. */
   useEffect(() => {
@@ -79,6 +88,22 @@ export function ShopGrid() {
         <div className="spin" />
         <p style={{ color: 'var(--slate)', fontSize: 14, letterSpacing: '.4px' }}>Loading live products…</p>
       </div>
+
+      {loading && (
+        <div className="skel-grid" aria-hidden="true">
+          {Array.from({ length: 8 }, (_, i) => (
+            <div className="sk-card" key={i}>
+              <div className="sk-img" />
+              <div className="sk-body">
+                <div className="sk-line w40" />
+                <div className="sk-line w80" />
+                <div className="sk-line w25" />
+                <div className="sk-line w60" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div id="error-state" className={loadStatus === 'error' ? 'loading-box' : 'loading-box hidden'}>
         <div className="state-icon">⚠️</div>

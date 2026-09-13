@@ -18,6 +18,9 @@ export function Checkout() {
   const [loc, setLoc] = useState('')
   const [pay, setPay] = useState('')
   const [busy, setBusy] = useState(false)
+  const [sbOn, setSbOn] = useState(false)
+  const boxRef = useRef<HTMLDivElement>(null)
+  const thumbRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     syncOverlayLock()
@@ -27,6 +30,48 @@ export function Checkout() {
     setLoc('')
     setPay('')
     setBusy(false)
+    setSbOn(false)
+  }, [checkoutOpen])
+
+  /* Thin auto-hiding scrollbar: thumb follows the box while it scrolls,
+     fades in on scroll and fades out ~0.85s after the last one. */
+  useEffect(() => {
+    if (!checkoutOpen) return
+    const box = boxRef.current
+    const thumb = thumbRef.current
+    if (!box || !thumb) return
+
+    let raf = 0
+    let idle: ReturnType<typeof setTimeout> | undefined
+
+    const update = () => {
+      const max = box.scrollHeight - box.clientHeight
+      const h = Math.max(28, (box.clientHeight / box.scrollHeight) * box.clientHeight)
+      thumb.style.height = `${h}px`
+      thumb.style.transform = `translateY(${max > 0 ? (box.scrollTop / max) * (box.clientHeight - h) : 0}px)`
+    }
+
+    const onScroll = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(update)
+      setSbOn(true)
+      window.clearTimeout(idle)
+      idle = window.setTimeout(() => setSbOn(false), 850)
+    }
+
+    update()
+    box.addEventListener('scroll', onScroll, { passive: true })
+    box.addEventListener('input', () => requestAnimationFrame(update), true)
+    const ro = new ResizeObserver(update)
+    ro.observe(box)
+    Array.from(box.children).forEach((c) => ro.observe(c))
+
+    return () => {
+      cancelAnimationFrame(raf)
+      window.clearTimeout(idle)
+      box.removeEventListener('scroll', onScroll)
+      ro.disconnect()
+    }
   }, [checkoutOpen])
 
   if (!checkoutOpen) return null
@@ -80,7 +125,8 @@ export function Checkout() {
 
   return (
     <div id="checkout-veil" className="on" onClick={(e) => { if (e.target === e.currentTarget) closeCheckout() }}>
-      <div id="checkout-box" role="dialog" aria-modal="true" aria-label="Checkout">
+      <div className="co-wrap" role="dialog" aria-modal="true" aria-label="Checkout">
+        <div id="checkout-box" ref={boxRef} data-lenis-prevent>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
           <h2 className="co-title">Checkout</h2>
           <button className="icon-btn" type="button" aria-label="Close checkout" onClick={closeCheckout}>
@@ -140,6 +186,10 @@ export function Checkout() {
         <button className="btn-place" id="btn-place" type="button" ref={btnRef} disabled={busy} onClick={submit}>
           {busy ? <><i className="fa fa-spinner fa-spin" /> Placing Order…</> : <><i className="fa fa-check-circle" /> Place Order</>}
         </button>
+        </div>
+        <div className={sbOn ? 'co-sb on' : 'co-sb'} aria-hidden="true">
+          <div className="co-sb-thumb" ref={thumbRef} />
+        </div>
       </div>
     </div>
   )

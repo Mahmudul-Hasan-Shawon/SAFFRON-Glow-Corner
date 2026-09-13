@@ -4,6 +4,7 @@ import { setLenis, getLenis } from './utils/lenis'
 import { ShopProvider, useShop } from './store/shop'
 import { initScrollFx } from './utils/scrollfx'
 import { initReveal } from './utils/reveal'
+import { motionOK } from './utils/feedback'
 import { Navbar } from './components/ui/Navbar'
 import { Footer } from './components/ui/Footer'
 import { MobileBottomNav } from './components/ui/MobileBottomNav'
@@ -19,6 +20,7 @@ import { About } from './pages/About'
 import { Gallery } from './pages/Gallery'
 import { Faq } from './pages/Faq'
 import { Contact } from './pages/Contact'
+import { Brands } from './pages/Brands'
 
 interface PageProps { onNavigate: (href: string) => void }
 
@@ -28,6 +30,7 @@ const routes: Record<string, (props: PageProps) => ReactElement> = {
   '/gallery': Gallery,
   '/faq': Faq,
   '/contact': Contact,
+  '/brands': Brands,
 }
 
 function norm(path: string) {
@@ -47,6 +50,7 @@ function Shell() {
   const [pageKey, setPageKey] = useState(0)
 
   useEffect(() => {
+    if (!motionOK()) return // Lenis smooth scrolling is motion — skip it.
     const lenis = new Lenis({ autoRaf: true, smoothWheel: true, wheelMultiplier: 1 })
     setLenis(lenis)
     return () => { lenis.destroy(); setLenis(undefined) }
@@ -59,22 +63,50 @@ function Shell() {
   }, [])
 
   /* Vanilla showProductView() scrolls to the top on open and back to the
-     shopper's spot on close — mirror that so the page never jumps oddly. */
+     shopper's spot on close — mirror that so the page never jumps oddly.
+     Opening also pushes `#product-N` so the browser Back button returns to
+     the grid instead of leaving the site; closing (✕, Escape, breadcrumb)
+     goes back through that entry. Inbound deep links (#product-N in the URL
+     on load) close with a plain hash clear, not a spurious history entry. */
   const lastShopY = useRef(0)
   const wasProductOpen = useRef(false)
+  const pushedProductHash = useRef(false)
+
+  const smoothTo = useCallback((y: number) => {
+    const lenis = getLenis()
+    if (lenis) lenis.scrollTo(y, { duration: 1.1 })
+    else window.scrollTo({ top: y, behavior: motionOK() ? 'smooth' : 'auto' })
+  }, [])
 
   useEffect(() => {
-    if (shop.productId !== null) {
+    const pid = shop.productId
+    if (pid !== null) {
       wasProductOpen.current = true
+      const hash = window.location.hash || ''
+      if (!/^#product-\d+$/.test(hash)) {
+        pushedProductHash.current = true
+        window.history.pushState({ pid }, '', `#product-${pid}`)
+      } else if (hash !== `#product-${pid}`) {
+        /* Jumping straight to another product (related grid) — keep the
+           same history entry, just retarget the hash. */
+        window.history.replaceState({ pid }, '', `#product-${pid}`)
+      }
       lastShopY.current = window.scrollY
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      smoothTo(0)
       return
     }
-    if (wasProductOpen.current) {
-      wasProductOpen.current = false
-      window.scrollTo({ top: lastShopY.current, behavior: 'smooth' })
+    if (!wasProductOpen.current) return
+    wasProductOpen.current = false
+    if (pushedProductHash.current && /^#product-\d+$/.test(window.location.hash || '')) {
+      pushedProductHash.current = false
+      window.history.back() // popstate → handleHash → closeProduct is a no-op now.
+      return
     }
-  }, [shop.productId])
+    if (/^#product-\d+$/.test(window.location.hash || '')) {
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+    smoothTo(lastShopY.current)
+  }, [shop.productId, smoothTo])
 
   const handleHash = useCallback(() => {
     const m = String(window.location.hash || '').match(/^#product-(\d+)$/)
@@ -84,7 +116,7 @@ function Shell() {
     }
     if (window.location.hash === '#shop') {
       const el = document.getElementById('shop')
-      if (el) el.scrollIntoView({ behavior: 'smooth' })
+      if (el) el.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto' })
     }
     closeProduct()
   }, [openProduct, closeProduct])
@@ -100,7 +132,9 @@ function Shell() {
     return () => window.removeEventListener('hashchange', handleHash)
   }, [handleHash])
 
-  /* Escape closes only the topmost overlay (same order as the vanilla site). */
+  /* Escape closes only the topmost overlay (same order as the vanilla site).
+     The gallery lightbox sits above everything and owns its own Esc handler —
+     skip the chain entirely while it is open so nothing behind it closes. */
   const productId = shop.productId
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -109,6 +143,7 @@ function Shell() {
         const el = document.getElementById(id)
         return el && el.classList.contains('on')
       }
+      if (has('lightbox')) return
       if (has('inv-veil')) { setInvoiceOpen(false); return }
       if (has('track-veil')) { closeTrack(); return }
       if (has('success-veil')) { closeSuccess(); return }
@@ -141,7 +176,8 @@ function Shell() {
       return
     }
 
-    window.history.pushState({}, '', target + (hash ? '#' + hash : ''))
+    /* Save the shopper's spot so Back restores it (see onPop). */
+    window.history.pushState({ scroll: window.scrollY }, '', target + (hash ? '#' + hash : ''))
     setPath(target)
     setPageKey((k) => k + 1)
     if (target !== '/') closeProduct()
@@ -149,21 +185,29 @@ function Shell() {
     if (hash) {
       window.setTimeout(() => {
         const el = document.getElementById(hash)
-        if (el) el.scrollIntoView({ behavior: 'smooth' })
+        if (el) el.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto' })
       }, 80)
     }
   }, [path, closeProduct, scrollToTop])
 
   useEffect(() => {
-    const onPop = () => {
-      setPath(norm(window.location.pathname))
-      setPageKey((k) => k + 1)
+    const onPop = (e: PopStateEvent) => {
+      const nextPath = norm(window.location.pathname)
       handleHash()
-      scrollToTop()
+      /* Same-route pops (e.g. Back closing #product-N) are handled by the
+         product effect / handleHash — only real page changes swap+scroll. */
+      if (nextPath === path) return
+      setPath(nextPath)
+      setPageKey((k) => k + 1)
+      const s = e.state as { scroll?: number } | null
+      const y = s && typeof s.scroll === 'number' ? s.scroll : 0
+      const lenis = getLenis()
+      if (lenis) lenis.scrollTo(y, { immediate: true })
+      else window.scrollTo(0, y)
     }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
-  }, [handleHash, scrollToTop])
+  }, [path, handleHash])
 
   const Page = routes[path] ?? Home
 

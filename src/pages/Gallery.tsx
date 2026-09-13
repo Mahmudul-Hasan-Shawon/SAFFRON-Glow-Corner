@@ -6,6 +6,7 @@ import type { GalleryItem } from '../lib/types'
 import { site } from '../data/site'
 import { observeNew } from '../utils/reveal'
 import { syncOverlayLock } from '../utils/overlay'
+import { mountFocusTrap } from '../utils/focusTrap'
 
 interface PageProps { onNavigate: (href: string) => void }
 
@@ -18,6 +19,7 @@ export function Gallery({ onNavigate }: PageProps) {
   const [status, setStatus] = useState<Status>('loading')
   const [idx, setIdx] = useState<number | null>(null)
   const fetching = useRef(false)
+  const lbRef = useRef<HTMLDivElement>(null)
 
   const load = useCallback(async () => {
     setStatus('loading')
@@ -48,14 +50,17 @@ export function Gallery({ onNavigate }: PageProps) {
   }, [status, items])
 
   useEffect(() => {
-    syncOverlayLock()
-  }, [idx])
-
-  useEffect(() => {
     if (idx === null) return
+    syncOverlayLock()
+    const untrap = mountFocusTrap(lbRef.current)
+    /* Gallery owns its Escape (App's chain deliberately skips while the
+       lightbox is on, so nothing behind it closes at the same time). */
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setIdx(null) }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      untrap?.()
+    }
   }, [idx])
 
   const renderSkeletons = () =>
@@ -70,6 +75,12 @@ export function Gallery({ onNavigate }: PageProps) {
         className="gallery-item is-loading reveal"
         data-delay={Math.min(i, 11) * 45}
         onClick={() => setIdx(i)}
+        role="button"
+        tabIndex={0}
+        aria-label={g.title ? `View ${g.title} larger` : 'View image larger'}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIdx(i) }
+        }}
       >
         <img
           src={g.imageUrl}
@@ -96,7 +107,6 @@ export function Gallery({ onNavigate }: PageProps) {
       />
 
       <div className="static-section tight">
-        <div className="gallery-filters reveal" id="gallery-filters" />
         <div className="gallery-grid reveal" id="gallery-grid">
           {status === 'loading' && renderSkeletons()}
           {status === 'ready' && renderItems()}
@@ -131,12 +141,24 @@ export function Gallery({ onNavigate }: PageProps) {
         </div>
       </div>
 
-      <div id="lightbox" className={idx !== null ? 'on' : ''} onClick={(e) => { if (e.target === e.currentTarget) setIdx(null) }} data-lenis-prevent>
+      <div
+        id="lightbox"
+        ref={lbRef}
+        className={idx !== null ? 'on' : ''}
+        onClick={(e) => { if (e.target === e.currentTarget) setIdx(null) }}
+        data-lenis-prevent
+      >
         <button type="button" className="lb-x" aria-label="Close" onClick={() => setIdx(null)}><i className="fa fa-xmark" /></button>
-        <figure className="lb-fig">
-          <img src={idx !== null ? items[idx]?.imageUrl : ''} alt={idx !== null ? items[idx]?.title || '' : ''} />
-          <figcaption>{idx !== null ? items[idx]?.title || '' : ''}</figcaption>
-        </figure>
+        {idx !== null && (
+          <figure className="lb-fig" key={idx}>
+            <img
+              src={items[idx]?.imageUrl}
+              alt={items[idx]?.title || ''}
+              onLoad={(e) => e.currentTarget.classList.add('lb-loaded')}
+            />
+            <figcaption>{items[idx]?.title || ''}</figcaption>
+          </figure>
+        )}
       </div>
     </div>
   )

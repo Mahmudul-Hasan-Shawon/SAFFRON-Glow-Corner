@@ -1,6 +1,12 @@
 export const REDUCED_MOTION =
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
+/* Live check — the const above is captured at module load, so an OS-level
+   reduced-motion change mid-session would be missed. Scroll behavior and
+   one-shot decisions should call this instead. */
+export const motionOK = (): boolean =>
+  typeof window === 'undefined' || !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
 /* "Fly" a dot from the add-to-bag button to the cart icon. */
 export function flyToCart(srcEl: HTMLElement | null) {
   if (REDUCED_MOTION || !srcEl) return

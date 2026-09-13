@@ -155,12 +155,7 @@ function renderDescription(p: Product): RenderedSec[] {
       if (!pairs.length) return
       body = (
         <div className="pd-faq">
-          {pairs.map((x, i) => (
-            <div key={i} className="pd-faq-item" onClick={(e) => (e.currentTarget as HTMLElement).classList.toggle('open')}>
-              <div className="pd-faq-q"><span>{x.q}</span><i className="fa-solid fa-chevron-down" /></div>
-              <div className="pd-faq-a"><p>{x.a}</p></div>
-            </div>
-          ))}
+          {pairs.map((x, i) => <PdFaqItem key={i} q={x.q} a={x.a} />)}
         </div>
       )
     } else {
@@ -182,6 +177,21 @@ function renderDescription(p: Product): RenderedSec[] {
   })
 
   return out
+}
+
+/* Accessible accordion item for the product-description FAQ section —
+   replaces the old click-only div that mutated classList outside React. */
+function PdFaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className={open ? 'pd-faq-item open' : 'pd-faq-item'}>
+      <button type="button" className="pd-faq-q" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        <span>{q}</span>
+        <i className="fa-solid fa-chevron-down" />
+      </button>
+      <div className="pd-faq-a"><p>{a}</p></div>
+    </div>
+  )
 }
 
 export function ProductView() {
@@ -251,16 +261,16 @@ export function ProductView() {
     `${p.brand} ${p.title}${p.size ? ` — ${p.size}` : ''}. Message us on WhatsApp for full product details.`
 
   return (
-    <section id="product-page" aria-live="polite">
+    <section id="product-page">
       <div className="pp-inner">
         <button className="pp-back" type="button" onClick={closeProduct}>
           <i className="fa-solid fa-arrow-left" /> Back to Shop
         </button>
 
         <nav className="pp-crumb" aria-label="Breadcrumb">
-          <span className="pp-crumb-link" role="button" tabIndex={0} onClick={closeProduct}>Shop</span>
+          <button type="button" className="pp-crumb-link" onClick={closeProduct}>Shop</button>
           <i className="fa-solid fa-angle-right" />
-          <span className="pp-crumb-link" role="button" tabIndex={0} onClick={goCategory}>{p.category ?? 'All'}</span>
+          <button type="button" className="pp-crumb-link" onClick={goCategory}>{p.category ?? 'All'}</button>
           <i className="fa-solid fa-angle-right" />
           <strong>{trunc(p.title, 40)}</strong>
         </nav>
@@ -294,8 +304,6 @@ export function ProductView() {
                 <i className="fa fa-bag-shopping" /> Add to Bag
               </button>
             </div>
-
-            <div className="pp-short" id="pp-short" />
 
             <table className="pp-meta">
               <tbody>

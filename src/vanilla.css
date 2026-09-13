@@ -448,26 +448,23 @@ a:focus-visible,
 
 .nav-logo {
     font-family: var(--ff-logo);
-    font-size: 25px;
-    font-weight: 700;
-    letter-spacing: 2.5px;
+    display: inline-flex;
+    align-items: center;
     white-space: nowrap;
     flex-shrink: 0;
     max-width: 40%;
     overflow: hidden;
     text-overflow: ellipsis;
-    background: linear-gradient(100deg, var(--rose-d), var(--rose) 45%, var(--gold));
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    animation: logoShine 7s linear infinite;
     cursor: pointer;
     transition: var(--tr)
 }
 
-.nav-logo:hover {
-    letter-spacing: 4px
+.nav-logo:hover .display-logo {
+    letter-spacing: .08em
+}
+
+.nav-logo .display-logo {
+    transition: letter-spacing .4s var(--e-silk)
 }
 
 @keyframes logoShine {
@@ -1099,14 +1096,6 @@ a:focus-visible,
 
 .hero-btn:hover span {
     color: #fff !important;
-}
-
-.hero-btn .fa-whatsapp {
-    color: #22C55E
-}
-
-.hero-btn:hover .fa-whatsapp {
-    color: #fff
 }
 
 .hero-btn-ghost {

@@ -1,6 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { site } from '../../data/site'
 import { useShop } from '../../store/shop'
+import { syncOverlayLock } from '../../utils/overlay'
+import { mountFocusTrap } from '../../utils/focusTrap'
+import { motionOK } from '../../utils/feedback'
 
 interface MobileBottomNavProps {
   activePath: string
@@ -9,11 +12,19 @@ interface MobileBottomNavProps {
 }
 
 export function MobileBottomNav({ activePath, onNavigate, onTrack }: MobileBottomNavProps) {
-  const { cartCount, setCartOpen, products, activeCat, setActiveCat } = useShop()
+  const { cartCount, setCartOpen, products, activeCat, setActiveCat, productId, closeProduct } = useShop()
   const isHome = activePath === '/'
   const [catOpen, setCatOpen] = useState(false)
+  const catPageRef = useRef<HTMLDivElement>(null)
 
   const go = (href: string) => onNavigate(href)
+
+  /* Home must leave any open product view (when a product is open the home
+     body is replaced entirely, so navigate('/') alone looks like a no-op). */
+  const goHome = () => {
+    if (productId !== null) closeProduct()
+    go('/')
+  }
 
   /* Same list (and counts) the shop's category dropdown builds. */
   const categories = useMemo(() => {
@@ -30,18 +41,24 @@ export function MobileBottomNav({ activePath, onNavigate, onTrack }: MobileBotto
     setCatOpen(false)
     if (isHome) {
       const el = document.getElementById('shop')
-      if (el) el.scrollIntoView({ behavior: 'smooth' })
+      if (el) el.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto' })
     } else {
       go('/#shop')
     }
   }
 
-  /* Escape closes the sheet while it is open. */
+  /* Escape closes the overlay; scroll locks and focus is trapped while open. */
   useEffect(() => {
     if (!catOpen) return
+    syncOverlayLock()
+    const untrap = mountFocusTrap(catPageRef.current)
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setCatOpen(false) }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      untrap?.()
+      syncOverlayLock()
+    }
   }, [catOpen])
 
   const keyAct = (fn: () => void) => (e: React.KeyboardEvent) => {
@@ -54,7 +71,7 @@ export function MobileBottomNav({ activePath, onNavigate, onTrack }: MobileBotto
         {isHome ? (
           <>
             <div className="mbn-item" role="button" tabIndex={0} aria-label="Go to top"
-              onClick={() => go('/')} onKeyDown={keyAct(() => go('/'))}>
+              onClick={goHome} onKeyDown={keyAct(goHome)}>
               <i className="fa fa-house" />
               <span className="mbn-label">Home</span>
             </div>
@@ -83,10 +100,15 @@ export function MobileBottomNav({ activePath, onNavigate, onTrack }: MobileBotto
           <>
             <a href="/" className={activePath === '/' ? 'mbn-item act' : 'mbn-item'}
               aria-current={activePath === '/' ? 'page' : undefined}
-              onClick={(e) => { e.preventDefault(); onNavigate('/') }}>
+              onClick={(e) => { e.preventDefault(); goHome() }}>
               <i className="fa fa-house" />
               <span className="mbn-label">Home</span>
             </a>
+            <div className="mbn-item" role="button" tabIndex={0} aria-label="Go to the shop"
+              onClick={() => onNavigate('/#shop')} onKeyDown={keyAct(() => onNavigate('/#shop'))}>
+              <i className="fa fa-bag-shopping" />
+              <span className="mbn-label">Shop</span>
+            </div>
             <div className="mbn-item" role="button" tabIndex={0} id="mbn-cart" aria-label="Open cart"
               onClick={() => setCartOpen(true)} onKeyDown={keyAct(() => setCartOpen(true))}>
               <i className="fa fa-cart-shopping" />
@@ -115,6 +137,7 @@ export function MobileBottomNav({ activePath, onNavigate, onTrack }: MobileBotto
       <div
         className={catOpen ? 'mbn-cat-page on' : 'mbn-cat-page'}
         id="mbn-cat-page"
+        ref={catPageRef}
         role="dialog"
         aria-modal="true"
         aria-label="All categories"

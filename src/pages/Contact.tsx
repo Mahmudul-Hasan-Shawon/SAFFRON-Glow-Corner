@@ -11,6 +11,7 @@ export function Contact({ onNavigate }: PageProps) {
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
   const [sent, setSent] = useState(false)
+  const [failed, setFailed] = useState(false)
 
   const set = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }))
@@ -23,14 +24,19 @@ export function Contact({ onNavigate }: PageProps) {
       return
     }
     setBusy(true)
+    let failed = false
     try {
-      await fetch(
+      const res = await fetch(
         'https://script.google.com/macros/s/AKfycbxriqOAO51MW3ekmUhGZ6TWvEqgn9a7wYV6JxU5tvdkiu04VnLvlzRfi6B9JApXUXqLrg/exec',
         { method: 'POST', body: JSON.stringify({ action: 'submitContact', ...form }) },
       )
-    } catch { /* best effort only */ }
+      failed = !res.ok
+    } catch {
+      failed = true
+    }
     setBusy(false)
     setSent(true)
+    setFailed(failed) // show the success note even on failure — but be honest about it
   }
 
   return (
@@ -47,7 +53,7 @@ export function Contact({ onNavigate }: PageProps) {
         <div className="contact-grid">
           <div className="contact-info-card reveal">
             <h3>Get in Touch</h3>
-            <p>We usually reply within a few hours during business hours. For urgent same-day requests, WhatsApp is fastest.</p>
+            <p>We usually reply within a few hours during business hours — and typically faster during the day. For urgent same-day requests, WhatsApp is the fastest way to reach us; just send us a message with your order ID or product question and we'll jump right in. Have a skin concern you're unsure about? Tell us your skin type, current routine, and what you're hoping to improve, and we'll recommend products that actually fit your needs.</p>
 
             <div className="cic-item">
               <div className="ci-ic"><i className="fa-solid fa-phone" /></div>
@@ -66,7 +72,7 @@ export function Contact({ onNavigate }: PageProps) {
               <div><strong>Hours</strong><span>Sat–Thu: 10AM – 10PM</span></div>
             </div>
 
-            <a href={site.whatsapp} target="_blank" rel="noopener" className="hero-btn" style={{ marginTop: 10, background: '#fff', color: 'var(--rose-d)' }}>
+            <a href={site.whatsapp} target="_blank" rel="noopener" className="hero-btn" style={{ marginTop: 10 }}>
               <i className="fa-brands fa-whatsapp" style={{ fontSize: 20 }} />
               <span>Chat on WhatsApp</span>
             </a>
@@ -78,34 +84,40 @@ export function Contact({ onNavigate }: PageProps) {
                 <form onSubmit={submit}>
                   <h3>Send a Message</h3>
                   <p className="co-sub">Fill this out and we'll get back to you shortly.</p>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="cf-name">Your Name *</label>
-                      <input id="cf-name" type="text" value={form.name} onChange={set('name')} placeholder="Nusrat Jahan" required />
+                  <fieldset disabled={busy} style={{ border: 'none', margin: 0, padding: 0, minWidth: 0 }}>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="cf-name">Your Name *</label>
+                        <input id="cf-name" type="text" value={form.name} onChange={set('name')} placeholder="Nusrat Jahan" required />
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="cf-phone">Phone Number *</label>
+                        <input id="cf-phone" type="tel" value={form.phone} onChange={set('phone')} placeholder="01XXXXXXXXX" required />
+                      </div>
                     </div>
                     <div className="form-group">
-                      <label htmlFor="cf-phone">Phone Number *</label>
-                      <input id="cf-phone" type="tel" value={form.phone} onChange={set('phone')} placeholder="01XXXXXXXXX" required />
+                      <label htmlFor="cf-email">Email (optional)</label>
+                      <input id="cf-email" type="email" value={form.email} onChange={set('email')} placeholder="you@example.com" />
                     </div>
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="cf-email">Email (optional)</label>
-                    <input id="cf-email" type="email" value={form.email} onChange={set('email')} placeholder="you@example.com" />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="cf-message">Message *</label>
-                    <textarea id="cf-message" rows={5} value={form.message} onChange={set('message')} placeholder="Tell us what you're looking for — product, skin concern, or order question." required style={{ resize: 'none' }} />
-                  </div>
+                    <div className="form-group">
+                      <label htmlFor="cf-message">Message *</label>
+                      <textarea id="cf-message" rows={5} value={form.message} onChange={set('message')} placeholder="Tell us what you're looking for — product, skin concern, or order question." required style={{ resize: 'none' }} />
+                    </div>
+                  </fieldset>
                   {err && <p className="form-err" role="alert">{err}</p>}
                   <button type="submit" className="btn-place" disabled={busy}>
-                    <i className={`fa ${busy ? 'fa-spinner fa-spin' : 'fa-paper-plane'}`} /> Send Message
+                    <i className={`fa ${busy ? 'fa-spinner fa-spin' : 'fa-paper-plane'}`} /> {busy ? 'Sending…' : 'Send Message'}
                   </button>
                 </form>
               ) : (
                 <div className="contact-success on">
                   <div className="success-icon"><i className="fa fa-check" /></div>
-                  <h4>Message Sent!</h4>
-                  <p>Thanks for reaching out — we'll get back to you shortly. For a faster reply, feel free to message us on WhatsApp in the meantime.</p>
+                  <h4>{failed ? 'We could not confirm delivery' : 'Message Sent!'}</h4>
+                  <p>
+                    {failed
+                      ? 'Your connection may have dropped before the message went through. Please try again, or send it to us directly on WhatsApp.'
+                      : "Thanks for reaching out — we'll get back to you shortly. For a faster reply, feel free to message us on WhatsApp in the meantime."}
+                  </p>
                 </div>
               )}
 

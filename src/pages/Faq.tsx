@@ -29,7 +29,15 @@ export function Faq({ onNavigate }: PageProps) {
                   {f.q}
                   <i className="fa-solid fa-plus" />
                 </button>
-                <div className="faq-a" style={{ maxHeight: openIdx === i ? '300px' : '0' }}>
+                <div
+                  className="faq-a"
+                  ref={(el) => {
+                    if (!el) return
+                    /* Exact scrollHeight → the .4s max-height transition is
+                       smooth for short answers and never clips long ones. */
+                    el.style.maxHeight = openIdx === i ? `${el.scrollHeight}px` : '0'
+                  }}
+                >
                   <p>{f.a}</p>
                 </div>
               </div>
@@ -42,8 +50,7 @@ export function Faq({ onNavigate }: PageProps) {
           <p>We're happy to talk through custom designs, flavors, or delivery details.</p>
           <a
             href="/contact"
-            className="hero-btn"
-            style={{ background: 'linear-gradient(135deg,var(--rose-d),var(--rose))', color: '#fff' }}
+            className="hero-btn faq-cta-btn"
             onClick={(e) => { e.preventDefault(); onNavigate('/contact') }}
           >
             <i className="fa-brands fa-whatsapp" />

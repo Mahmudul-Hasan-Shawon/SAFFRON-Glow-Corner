@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import type { Product } from '../../lib/types'
 import { DEFAULT_IMG, discountPct, fmt, getImg } from '../../lib/format'
 import { useShop } from '../../store/shop'
@@ -14,15 +14,6 @@ export function ProductCard({ p, delay = 0 }: { p: Product; delay?: number }) {
   const { addToCart, openProduct } = useShop()
   const addBtnRef = useRef<HTMLButtonElement>(null)
 
-  useEffect(() => {
-    if (!delay) return
-    const t = window.setTimeout(() => {
-      const el = document.querySelector(`[data-pid="${p.id}"]`)
-      if (el) el.classList.add('in')
-    }, 0)
-    return () => window.clearTimeout(t)
-  }, [delay, p.id])
-
   const price = Number(p.displayPrice ?? p.offerPrice ?? p.oldPrice ?? 0) || 0
   const old = Number(p.oldPrice) || 0
   const pct = discountPct(p)
@@ -36,18 +27,11 @@ export function ProductCard({ p, delay = 0 }: { p: Product; delay?: number }) {
     addToCart(p.id)
   }
 
+  /* The card mounts as `.card.reveal` (no `in`) — the IntersectionObserver
+     armed by the grid/related-products effect adds `.in` as cards scroll
+     into view, replaying the staggered entrance via `data-delay`. */
   return (
-    <article
-      className="card reveal in"
-      data-delay={delay}
-      data-pid={p.id}
-      onClick={() => openProduct(p.id)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProduct(p.id) }
-      }}
-    >
+    <article className="card reveal" data-delay={delay} data-pid={p.id} onClick={() => openProduct(p.id)}>
       <div className="card-img">
         <img
           src={imgSrc}
@@ -75,7 +59,13 @@ export function ProductCard({ p, delay = 0 }: { p: Product; delay?: number }) {
       </div>
       <div className="card-body">
         <span className="card-brand">{p.brand}</span>
-        <p className="card-name">{p.title}</p>
+        <button
+          className="card-name card-open"
+          type="button"
+          onClick={(e) => { e.stopPropagation(); openProduct(p.id) }}
+        >
+          {p.title}
+        </button>
         <p className="card-size">{p.size}</p>
         <div className="card-pricing">
           <span className="p-new">{fmt(price)}</span>

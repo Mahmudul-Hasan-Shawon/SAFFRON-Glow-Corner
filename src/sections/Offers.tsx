@@ -14,28 +14,35 @@ function offerTitleHTML(t: string): string {
 export function Offers() {
   const { offers, openProduct, setActiveCat } = useShop()
   const [idx, setIdx] = useState(0)
-  const timerRef = useRef<number | null>(null)
+  const [paused, setPaused] = useState(false)
+  const [cycle, setCycle] = useState(0)
+  const touchX = useRef<number | null>(null)
+  const touchTimer = useRef<number | null>(null)
 
   const list = useMemo(() => (Array.isArray(offers) ? offers : []), [offers])
   const total = list.length
 
   useEffect(() => {
     setIdx(0)
-    return () => { if (timerRef.current) window.clearInterval(timerRef.current) }
   }, [total])
 
+  /* Autoplay pauses while hovered/focused (WCAG 2.2.2) and for a while
+     after any touch, so mobile users can read/act on a slide. */
   useEffect(() => {
-    if (total < 2 || REDUCED_MOTION) return
-    timerRef.current = window.setInterval(() => setIdx((prev) => (prev + 1) % total), 4500)
-    return () => { if (timerRef.current) window.clearInterval(timerRef.current) }
-  }, [total])
+    if (total < 2 || REDUCED_MOTION || paused) return
+    const t = window.setInterval(() => setIdx((prev) => (prev + 1) % total), 4500)
+    return () => window.clearInterval(t)
+  }, [total, paused, cycle])
 
   const goTo = (i: number) => {
     setIdx(i)
-    if (timerRef.current) window.clearInterval(timerRef.current)
-    if (total > 1 && !REDUCED_MOTION) {
-      timerRef.current = window.setInterval(() => setIdx((prev) => (prev + 1) % total), 4500)
-    }
+    setCycle((c) => c + 1) // restart the autoplay countdown
+  }
+
+  const touchPause = () => {
+    setPaused(true)
+    if (touchTimer.current) window.clearTimeout(touchTimer.current)
+    touchTimer.current = window.setTimeout(() => setPaused(false), 8000)
   }
 
   /** Vanilla: a bare-number Link jumps to that product; otherwise it is a
@@ -61,8 +68,24 @@ export function Offers() {
       <div className="offer-petal offer-petal-3">
       </div>
 
-      <div className="offer-slider">
-        <div className="offer-viewport">
+      <div
+        className="offer-slider"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        onFocusCapture={() => setPaused(true)}
+        onBlurCapture={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setPaused(false) }}
+      >
+        <div
+          className="offer-viewport"
+          onTouchStart={(e) => { touchX.current = e.touches[0].clientX; touchPause() }}
+          onTouchEnd={(e) => {
+            if (touchX.current === null) return
+            const dx = e.changedTouches[0].clientX - touchX.current
+            touchX.current = null
+            if (Math.abs(dx) < 42 || total < 2) return
+            goTo((idx + (dx < 0 ? 1 : -1) + total) % total)
+          }}
+        >
           <div className="offer-track" id="offerTrack" style={{ transform: `translateX(-${idx * 100}%)` }}>
             {list.map((o, i) => {
               const icon = String(o.icon ?? '').trim() || 'fa-solid fa-tag'

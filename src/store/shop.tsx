@@ -5,6 +5,7 @@ import {
   CART_KEY, loadShopData, fetchProductsRefresh, submitOrder,
 } from '../lib/api'
 import { getImg, maxQty, productPrice } from '../lib/format'
+import { bumpCartIcon } from '../utils/feedback'
 import type { Offer, OrderResult, Product, SiteConfig } from '../lib/types'
 
 export interface CartItem {
@@ -199,10 +200,9 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const setActiveCat = useCallback((c: string) => setActiveCatState(c), [])
   const clearFilter = useCallback(() => { setSearch(''); setActiveCat('All') }, [setActiveCat])
 
-  const openProduct = useCallback((id: number) => {
-    setProductId(id)
-    window.scrollTo({ top: 0 })
-  }, [])
+  /* Scroll-to-top on open is owned by App's productId effect — owning it
+     here as well made the instant jump fight the smooth scroll. */
+  const openProduct = useCallback((id: number) => setProductId(id), [])
   const closeProduct = useCallback(() => setProductId(null), [])
 
   /* ── Cart ops ──────────────────────────────────────────── */
@@ -219,6 +219,8 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       return next
     })
     showToast('Added to your bag')
+    /* Badge may have just mounted 0→N; wait a frame so the pop replays. */
+    window.setTimeout(bumpCartIcon, 30)
   }, [products, showToast])
 
   const changeQty = useCallback((id: number, d: number) => {
