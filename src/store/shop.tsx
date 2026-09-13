@@ -83,6 +83,7 @@ interface ShopContextValue {
   openCheckout: () => void
   closeCheckout: () => void
   trackOpen: boolean
+  trackPrefill: string
   openTrack: (prefill?: string) => void
   closeTrack: () => void
   successOpen: boolean
@@ -121,6 +122,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const [panelMode, setPanelMode] = useState<'brand' | 'category' | null>(null)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [trackOpen, setTrackOpen] = useState(false)
+  const [trackPrefill, setTrackPrefill] = useState('')
   const [successOpen, setSuccessOpen] = useState(false)
   const [invoiceOpen, setInvoiceOpen] = useState(false)
   const [lastOrder, setLastOrder] = useState<LastOrder | null>(null)
@@ -251,7 +253,10 @@ export function ShopProvider({ children }: { children: ReactNode }) {
 
   const openCheckout = useCallback(() => { setCartOpen(false); setCheckoutOpen(true) }, [])
   const closeCheckout = useCallback(() => setCheckoutOpen(false), [])
-  const openTrack = useCallback(() => setTrackOpen(true), [])
+  const openTrack = useCallback((prefill?: string) => {
+    setTrackPrefill(typeof prefill === 'string' ? prefill : '')
+    setTrackOpen(true)
+  }, [])
   const closeTrack = useCallback(() => setTrackOpen(false), [])
   const closeSuccess = useCallback(() => setSuccessOpen(false), [])
 
@@ -342,7 +347,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     cartOpen, setCartOpen,
     panelMode, openPanel, closePanel,
     checkoutOpen, openCheckout, closeCheckout,
-    trackOpen, openTrack, closeTrack,
+    trackOpen, trackPrefill, openTrack, closeTrack,
     successOpen, closeSuccess,
     invoiceOpen, setInvoiceOpen,
     lastOrder, placeOrder, toast, refresh,
@@ -354,7 +359,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     cartOpen, setCartOpen,
     panelMode, openPanel, closePanel,
     checkoutOpen, openCheckout, closeCheckout,
-    trackOpen, openTrack, closeTrack,
+    trackOpen, trackPrefill, openTrack, closeTrack,
     successOpen, closeSuccess,
     invoiceOpen, setInvoiceOpen,
     lastOrder, placeOrder, toast, refresh,

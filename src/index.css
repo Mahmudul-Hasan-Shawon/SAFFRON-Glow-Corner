@@ -1,293 +1,325 @@
-@import "tailwindcss";
+/* Saffron Glow Corner — the full original design system.
+   Verbatim import of assets/styles.css so the React app renders
+   pixel-for-pixel like the vanilla site (no Tailwind base reset,
+   which would fight the hand-rolled styles below). */
+@import "./vanilla.css";
 
-/* ============================================================
-   Saffron Glow Corner — Rose Palette
-   Crimson rose, soft gold, blush cream, warm ink.
-   Tailwind color utilities are generated with @theme inline
-   so they follow the vars below.
-   ============================================================ */
-
-:root {
-  --rose: #E11D48;
-  --rose-d: #9F1239;
-  --rose-s: #FFF1F2;
-  --rose-m: #FB7185;
-
-  --ink: #1C1917;
-  --slate: #6B6660;
-
-  --mist: #F8F5F2;
-  --chalk: #FDFBF9;
-  --blush: #FBEFF3;
-  --bdr: #EDE6E1;
-  --white: #FFFFFF;
-
-  /* Caramel / Golden accent */
-  --gold: #B4884A;
-  --gold-l: #FDF8EF;
-
-  /* Success */
-  --green: #15803D;
-  --green-l: #F0FDF4;
-
-  /* Error */
-  --red: #DC2626;
-  --red-l: #FEF2F2;
-
-  /* Info */
-  --blue: #1D4ED8;
-  --blue-l: #EFF6FF;
-
-  /* Teal */
-  --teal: #0D9488;
-  --teal-l: #F0FDFA;
-
-  /* Shadow / ring */
-
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Semantic Tailwind tokens follow the theme vars (inline → utilities
-   reference the var directly, so tweaking one var retints everything). */
-@theme inline {
-  --color-rose: var(--rose);
-  --color-rose-d: var(--rose-d);
-  --color-rose-s: var(--rose-s);
-  --color-rose-m: var(--rose-m);
-  --color-ink: var(--ink);
-  --color-slate: var(--slate);
-  --color-mist: var(--mist);
-  --color-chalk: var(--chalk);
-  --color-blush: var(--blush);
-  --color-bdr: var(--bdr);
-  --color-white: var(--white);
-  --color-gold: var(--gold);
-  --color-gold-l: var(--gold-l);
-  --color-green: var(--green);
-  --color-green-l: var(--green-l);
-  --color-red: var(--red);
-  --color-red-l: var(--red-l);
-}
-
-@theme {
-  --font-serif: 'Cormorant Garamond', Georgia, serif;
-  --font-sans: 'Manrope', system-ui, sans-serif;
-  --font-logo: 'Cinzel', Georgia, serif;
-  --font-num: 'Bodoni Moda', 'Cormorant Garamond', Didot, serif;
-  --font-bn: 'Hind Siliguri', 'Manrope', sans-serif;
-
-  --radius-r: 14px;
-  --radius-r-lg: 22px;
-  --radius-r-xl: 30px;
-}
-
-@layer base {
-  * {
-    box-sizing: border-box;
-  }
-
-  html {
-    scroll-behavior: auto;
-    overflow-x: clip;
-  }
-
-  html.lenis,
-  html.lenis body {
-    height: auto;
-  }
-
-  .lenis.lenis-smooth {
-    scroll-behavior: auto !important;
-  }
-
-  .lenis.lenis-smooth [data-lenis-prevent] {
-    overscroll-behavior: contain;
-  }
-
-  .lenis.lenis-stopped {
+/* ---------- Full-cover hero ---------- */
+/* `#hero` in vanilla.css is an ID selector, so overrides must beat it
+   (hence `#hero.hero-cover`). */
+#hero.hero-cover {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 0;
     overflow: hidden;
-  }
+    isolation: isolate;
+    background: url('/images/hero/hero.jpg') center / cover no-repeat;
+}
 
-  body {
-    font-family: var(--font-sans);
-    background: var(--blush);
-    color: var(--ink);
-    -webkit-font-smoothing: antialiased;
-    overflow-x: clip;
-    font-size: 16px;
-  }
+#hero.hero-cover::after {
+    content: none;
+}
 
-  ::selection {
+.hero-cover-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(100deg, rgba(16, 14, 30, .92) 0%, rgba(16, 14, 30, .62) 42%, rgba(16, 14, 30, .18) 100%);
+    pointer-events: none;
+}
+
+.hero-cover-inner {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 140px 48px 90px;
+}
+
+.hero-cover-inner .hero-copy {
+    max-width: 560px;
+}
+
+.hero-cover .hero-eyebrow,
+.hero-cover .hero-title,
+.hero-cover .hero-title em,
+.hero-cover .hero-sub {
+    color: #fff;
+    text-align: left;
+}
+
+.hero-cover .hero-eyebrow {
+    margin-bottom: 22px;
+}
+
+.hero-cover .hero-sub {
+    margin: 22px 0 34px;
+}
+
+.hero-cover .hero-btn-row {
+    justify-content: flex-start;
+}
+
+.hero-cover .hero-btn-ghost {
+    border-color: rgba(255, 255, 255, .55);
+    color: #fff;
+}
+
+.hero-cover .hero-btn-ghost:hover {
+    border-color: #fff;
+    background: rgba(255, 255, 255, .12);
+}
+
+@media (max-width: 700px) {
+    #hero.hero-cover {
+        min-height: 92vh;
+    }
+
+    .hero-cover-inner {
+        padding: 120px 24px 70px;
+    }
+}
+
+/* ---------- Contact form card: border only on hover ---------- */
+.contact-form-card {
+    border: none;
+}
+
+.contact-form-card:hover {
+    border: 1px solid var(--bdr);
+}
+
+/* ---------- Product card: no gradient border on hover ---------- */
+.card:hover::before {
+    opacity: 0;
+}
+
+/* ---------- Mobile bottom nav ----------
+   The React component renders <nav id="mbn">, but vanilla.css only styles
+   the old vanilla-site id #mobile-bottom-nav. Alias the fixed-position
+   rules and add the item/badge/label classes the markup actually uses. */
+#mbn {
+    display: none;
+}
+
+.mbn-item .mbn-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .2px;
+}
+
+.mbn-item .mbn-cart-count {
+    position: absolute;
+    top: 0;
+    right: 22%;
     background: var(--rose);
     color: #fff;
-  }
-
-  :focus-visible {
-    outline: 1.5px solid var(--rose-m);
-    outline-offset: 3px;
-    border-radius: 2px;
-  }
-
-  h1, h2, h3, h4 {
-    font-family: var(--font-sans);
-    letter-spacing: -0.02em;
-    text-wrap: balance;
-  }
-
-  input:focus,
-  select:focus,
-  textarea:focus {
-    outline: none !important;
-    outline-offset: 0 !important;
-    box-shadow: none !important;
-    -webkit-box-shadow: none !important;
-  }
+    font-size: 9px;
+    font-weight: 800;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+    box-shadow: 0 2px 6px -2px rgba(184, 103, 79, .6);
 }
 
-@layer components {
-  /* Typography helpers */
-  .display-serif {
-    font-family: var(--font-serif);
-    letter-spacing: -0.015em;
-  }
+.mbn-item .mbn-logo-img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+}
 
-  .display-logo {
-    font-family: var(--font-logo);
-  }
+.mbn-item.act {
+    color: var(--rose);
+}
 
-  .font-num {
-    font-family: var(--font-num);
-  }
+@media (max-width: 1024px) {
+    #mbn {
+        display: flex;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 245;
+        background: rgba(253, 249, 244, .93);
+        backdrop-filter: blur(22px) saturate(160%);
+        -webkit-backdrop-filter: blur(22px) saturate(160%);
+        border-top: 1px solid rgba(184, 103, 79, .12);
+        padding: 8px 2px calc(8px + env(safe-area-inset-bottom));
+        box-shadow: 0 -6px 24px -8px rgba(60, 35, 20, .18);
+    }
 
-  .mono-label {
-    font-size: 0.6875rem;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
+    #mbn .mbn-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        background: none;
+        color: var(--rose-d);
+        padding: 5px 2px;
+        position: relative;
+        cursor: pointer;
+        transition: var(--tr);
+    }
+
+    #mbn .mbn-item i {
+        font-size: 17px;
+        color: var(--rose);
+        transition: transform .4s var(--e-spring);
+    }
+
+    #mbn .mbn-item:active {
+        transform: scale(.92);
+    }
+
+    #mbn .mbn-item:active i {
+        transform: translateY(-4px) scale(1.15);
+    }
+}
+
+/* ---------- Footer credit link hover ---------- */
+.credit-link {
+    transition: opacity .2s ease;
+}
+
+.credit-link:hover {
+    opacity: .8;
+}
+
+/* ---------- Mobile bottom nav: full-page categories overlay ---------- */
+.mbn-cat-veil {
+    position: fixed;
+    inset: 0;
+    z-index: 250;
+    background: rgba(28, 25, 23, .45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s ease;
+}
+
+.mbn-cat-veil.on {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.mbn-cat-page {
+    position: fixed;
+    inset: 0;
+    z-index: 251;
+    background: var(--chalk, #FDFBF9);
+    padding: max(18px, env(safe-area-inset-top)) 22px calc(90px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    transform: translateY(6%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s ease, transform .35s var(--e-silk, cubic-bezier(.22, 1, .36, 1));
+}
+
+.mbn-cat-page.on {
+    transform: none;
+    opacity: 1;
+    pointer-events: all;
+}
+
+.mbn-cat-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--bdr);
+    margin-bottom: 20px;
+    font-weight: 800;
+    font-size: 17px;
+    color: var(--ink);
+    letter-spacing: .3px;
+}
+
+.mbn-cat-close {
+    background: var(--mist);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
     color: var(--slate);
-  }
-
-  .grad-text {
-    background: linear-gradient(120deg, var(--rose-d), var(--rose) 55%, var(--gold));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  /* Surfaces */
-  .panel {
-    background: var(--white);
-    border: 1px solid var(--bdr);
-    border-radius: var(--r-lg);
-  }
-
-  .glass {
-    background: rgba(255, 255, 255, 0.6);
-    border: 1px solid var(--bdr);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-  }
-
-  .card-hover {
-    transition: transform 0.5s var(--ease-out-expo), box-shadow 0.5s var(--ease-out-expo), border-color 0.4s ease;
-  }
-
-  .card-hover:hover {
-    transform: translateY(-6px);
-    border-color: rgba(225, 29, 72, 0.3);
-    box-shadow: 0 18px 40px -18px rgba(159, 18, 57, 0.18);
-  }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  ::-webkit-scrollbar-track {
-    background: var(--blush);
-  }
-  ::-webkit-scrollbar-thumb {
-    background: color-mix(in srgb, var(--rose-m) 50%, var(--blush));
-    border-radius: 4px;
-  }
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--tr, .2s);
 }
 
-/* ---------- Utility animation helpers ---------- */
-
-@keyframes float-soft {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-14px); }
+.mbn-cat-close:hover {
+    background: var(--rose-s);
+    color: var(--rose);
 }
 
-@keyframes fade-rise {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: none; }
+/* Pills reuse the side-panel .sp-pill styling (rounded, animated, gradient
+   when active); the nth-child stagger is scoped to .sp-body, so re-arm a
+   simple fade here. */
+.mbn-cat-pills {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 12px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: 12px;
 }
 
-@keyframes dd-in {
-  from { opacity: 0; transform: translateY(8px) scale(0.98); }
-  to { opacity: 1; transform: none; }
+.mbn-cat-pills .sp-pill {
+    font-size: 14px;
+    padding: 12px 22px;
+    animation: popIn .45s var(--e-spring, ease-out) both;
 }
 
-@keyframes spin {
-  to { transform: rotate(1turn); }
+.mbn-cat-pills .sp-pill:nth-child(1) { animation-delay: .04s }
+.mbn-cat-pills .sp-pill:nth-child(2) { animation-delay: .08s }
+.mbn-cat-pills .sp-pill:nth-child(3) { animation-delay: .12s }
+.mbn-cat-pills .sp-pill:nth-child(4) { animation-delay: .16s }
+.mbn-cat-pills .sp-pill:nth-child(5) { animation-delay: .20s }
+.mbn-cat-pills .sp-pill:nth-child(6) { animation-delay: .24s }
+.mbn-cat-pills .sp-pill:nth-child(n+7) { animation-delay: .28s }
+
+/* ---------- Top scroll progress bar removed ---------- */
+#scroll-bar {
+    display: none;
 }
 
-@keyframes toast-in {
-  from { opacity: 0; transform: translate(-50%, 16px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
+/* ---------- Category dropdown: thin right-side scrollbar ---------- */
+.cat-dd-menu,
+.nav-dd-menu {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(128, 90, 60, .4) transparent;
+    overscroll-behavior: contain;
 }
 
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+.cat-dd-menu::-webkit-scrollbar,
+.nav-dd-menu::-webkit-scrollbar {
+    width: 6px;
 }
 
-@keyframes marquee-x {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+.cat-dd-menu::-webkit-scrollbar-track,
+.nav-dd-menu::-webkit-scrollbar-track {
+    background: transparent;
 }
 
-.mask-fade-x {
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
-  mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+.cat-dd-menu::-webkit-scrollbar-thumb,
+.nav-dd-menu::-webkit-scrollbar-thumb {
+    background: rgba(128, 90, 60, .4);
+    border-radius: 8px;
 }
 
-@layer components {
-  .animate-float-soft {
-    animation: float-soft 6s ease-in-out infinite;
-  }
-
-  .animate-marquee {
-    animation: marquee-x 36s linear infinite;
-  }
-
-  .animate-marquee:hover {
-    animation-play-state: paused;
-  }
-
-  .reveal-anim {
-    animation: fade-rise 0.7s var(--ease-out-expo) both;
-  }
-
-  .dd-in {
-    animation: dd-in 0.28s var(--ease-out-expo) both;
-  }
-
-  .spin {
-    animation: spin 0.8s linear infinite;
-  }
-
-  .toast-in {
-    animation: toast-in 0.4s var(--ease-out-expo) both;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+.cat-dd-menu::-webkit-scrollbar-thumb:hover,
+.nav-dd-menu::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 90, 60, .6);
 }

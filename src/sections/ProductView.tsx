@@ -1,201 +1,332 @@
-import { useMemo, useState } from 'react'
-import { ArrowLeft, Minus, Plus, ShoppingBag, ChevronRight } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useShop } from '../store/shop'
-import { discountPct, fmt, getImg } from '../lib/format'
-import { cn } from '../utils/cn'
+import { DEFAULT_IMG, discountPct, esc, fmt, getImg, maxQty, trunc } from '../lib/format'
+import { ProductCard } from '../components/ui/ProductCard'
+import { observeNew } from '../utils/reveal'
+import { flyToCart } from '../utils/feedback'
+import type { Product } from '../lib/types'
+
+interface DescSection {
+  type: string
+  label: string
+  lines: string[]
+}
+
+function stockInfo(p: Product): { cls: string; label: string } {
+  if (!p.inStock) return { cls: 'out', label: 'Out of Stock' }
+  if (String(p.stockStatus ?? '').toLowerCase().indexOf('low') !== -1) return { cls: 'low', label: 'Low Stock' }
+  return { cls: 'in', label: 'In Stock' }
+}
 
 const DESC_SECTIONS = [
-  { keys: ['what is it', 'description', 'overview'], type: 'para' as const },
-  { keys: ['key benefits', 'benefits'], type: 'bullets' as const },
-  { keys: ['key ingredients', 'ingredients', 'hero ingredients'], type: 'bullets' as const },
-  { keys: ['for', 'suitable for'], type: 'bullets' as const, label: 'For' },
-  { keys: ['how to use', 'usage'], type: 'bullets' as const },
-  { keys: ['full list of ingredients', 'full ingredient list', 'ingredient list'], type: 'bullets' as const },
+  { keys: ['for', 'suitable for'], type: 'pills', label: 'For', icon: 'fa-solid fa-user-check' },
+  { keys: ['ingredients', 'key ingredients'], type: 'ingredients', label: 'Ingredients', icon: 'fa-solid fa-leaf' },
+  { keys: ['benefits', 'key benefits'], type: 'list', label: 'Benefits', icon: 'fa-solid fa-star' },
+  { keys: ['key features', 'features', 'highlights'], type: 'list', label: 'Key Features', icon: 'fa-solid fa-wand-magic-sparkles' },
+  { keys: ['how to use', 'usage', 'directions', 'how to apply'], type: 'steps', label: 'How to Use', icon: 'fa-solid fa-hand-sparkles' },
+  { keys: ['faq', 'faqs'], type: 'faq', label: 'FAQ', icon: 'fa-solid fa-circle-question' },
 ]
 
-function matchHeading(line: string): string | null {
-  const clean = line.toLowerCase().replace(/[:_-]*\s*$/, '')
-  const hit = DESC_SECTIONS.find((s) => s.keys.some((k) => clean === k || clean.startsWith(k + ' ') || clean.startsWith(k + ':')))
-  return hit ? hit.type : null
+function matchHeading(line: string): { def: { type: string; label: string; icon: string } | null; label: string; inline: string } | null {
+  const m = line.match(/^([A-Za-z][A-Za-z /&'-]{0,40})\s*:\s*(.*)$/)
+  if (!m) return null
+  const label = m[1].trim()
+  const inline = m[2].trim()
+  const low = label.toLowerCase()
+  if (low === 'answer' || low === 'a' || low === 'q' || low === 'question') return null
+  for (const s of DESC_SECTIONS) {
+    if (s.keys.includes(low)) return { def: s, label: s.label, inline }
+  }
+  if (!inline && label.split(/\s+/).length <= 5) return { def: null, label, inline: '' }
+  return null
+}
+
+function parseDescription(text: string): { intro: string[]; sections: DescSection[] } {
+  const lines = String(text ?? '').replace(/\r/g, '').split('\n')
+  const intro: string[] = []
+  const sections: DescSection[] = []
+  let cur: DescSection | null = null
+
+  const pushLine = (line: string) => {
+    if (cur) cur.lines.push(line)
+    else intro.push(line)
+  }
+
+  lines.forEach((raw) => {
+    const line = raw.trim()
+    if (!line) { pushLine(''); return }
+    const h = matchHeading(line)
+    if (h) {
+      cur = { type: h.def ? h.def.type : 'text', label: h.label, lines: [] }
+      sections.push(cur)
+      if (h.inline) cur.lines.push(h.inline)
+    } else {
+      pushLine(line)
+    }
+  })
+
+  const paras: string[] = []
+  let buf: string[] = []
+  intro.forEach((l) => {
+    if (l === '') { if (buf.length) { paras.push(buf.join(' ')); buf = [] } }
+    else buf.push(l)
+  })
+  if (buf.length) paras.push(buf.join(' '))
+
+  const kept = sections.filter((s) => s.lines.some((l) => l !== ''))
+  return { intro: paras, sections: kept }
+}
+
+function descItems(lines: string[], splitCommas: boolean): string[] {
+  const items: string[] = []
+  lines.forEach((l) => {
+    if (!l) return
+    l = l.replace(/^[-•*\u2022]\s*/, '')
+    if (splitCommas && l.indexOf(',') !== -1) {
+      l.split(',').forEach((x) => { x = x.trim(); if (x) items.push(x) })
+    } else if (l) items.push(l)
+  })
+  return items
+}
+
+function descFaqPairs(lines: string[]): Array<{ q: string; a: string }> {
+  const pairs: Array<{ q: string; a: string }> = []
+  let q: string | null = null
+  let a: string[] = []
+  const flush = () => { if (q !== null) pairs.push({ q, a: a.join(' ').trim() }); q = null; a = [] }
+  lines.forEach((l) => {
+    if (!l) return
+    const am = l.match(/^(?:answer|a)\s*:\s*(.*)$/i)
+    const qm = l.match(/^(?:question|q)\s*:\s*(.*)$/i)
+    if (am) { a.push(am[1]); return }
+    if (qm) { flush(); q = qm[1]; return }
+    if (q === null) { q = l } else if (a.length) { flush(); q = l } else { a.push(l) }
+  })
+  flush()
+  return pairs.filter((p) => p.q && p.a)
+}
+
+interface RenderedSec {
+  label: string
+  icon: string
+  body: React.ReactNode
+}
+
+function renderDescription(p: Product): RenderedSec[] {
+  const parsed = parseDescription(p.description ?? '')
+  const out: RenderedSec[] = []
+
+  parsed.sections.forEach((s) => {
+    if (s.label && s.label.toLowerCase() === 'title') return
+    const def = DESC_SECTIONS.find((d) => d.label === s.label)
+    const icon = def ? def.icon : 'fa-solid fa-circle-info'
+    const type = s.type
+
+    let body: React.ReactNode = null
+
+    if (type === 'pills') {
+      const pills = descItems(s.lines, true)
+      if (!pills.length) return
+      body = <div className="pd-pills">{pills.map((x, i) => <span key={i} className="pd-pill">{x}</span>)}</div>
+    } else if (type === 'ingredients') {
+      const ingredients = s.lines.filter((l) => !!l)
+      if (!ingredients.length) return
+      body = ingredients.map((l, i) => <p key={i} className="pd-para">{l}</p>)
+    } else if (type === 'list') {
+      const items = descItems(s.lines, false)
+      if (!items.length) return
+      body = (
+        <ul className="pd-list">
+          {items.map((x, i) => (
+            <li key={i}><i className="fa-solid fa-circle-check" /><span>{x}</span></li>
+          ))}
+        </ul>
+      )
+    } else if (type === 'steps') {
+      const steps = descItems(s.lines, false)
+      if (!steps.length) return
+      body = (
+        <ol className="pd-steps">
+          {steps.map((x, i) => <li key={i}><span>{x}</span></li>)}
+        </ol>
+      )
+    } else if (type === 'faq') {
+      const pairs = descFaqPairs(s.lines)
+      if (!pairs.length) return
+      body = (
+        <div className="pd-faq">
+          {pairs.map((x, i) => (
+            <div key={i} className="pd-faq-item" onClick={(e) => (e.currentTarget as HTMLElement).classList.toggle('open')}>
+              <div className="pd-faq-q"><span>{x.q}</span><i className="fa-solid fa-chevron-down" /></div>
+              <div className="pd-faq-a"><p>{x.a}</p></div>
+            </div>
+          ))}
+        </div>
+      )
+    } else {
+      const txt = s.lines.filter((l) => !!l)
+      if (!txt.length) return
+      body = txt.map((l, i) => <p key={i} className="pd-para">{l}</p>)
+    }
+
+    out.push({
+      label: s.label,
+      icon,
+      body: (
+        <div className="pd-section">
+          <h3 className="pd-title"><i className={icon} /> {s.label}</h3>
+          {body}
+        </div>
+      ),
+    })
+  })
+
+  return out
 }
 
 export function ProductView() {
-  const { productId, products, addToCart, config, setActiveCat, openProduct, closeProduct } = useShop()
+  const { productId, products, addToCart, setActiveCat, closeProduct } = useShop()
   const [qty, setQty] = useState(1)
+  const addRef = useRef<HTMLButtonElement>(null)
+  const relatedRef = useRef<HTMLDivElement>(null)
 
-  const p = useMemo(() => (productId !== null ? products.find((x) => x.id === productId) : null), [productId, products])
+  const p = useMemo(
+    () => (productId !== null ? products.find((x) => x.id === productId) ?? null : null),
+    [productId, products],
+  )
+
+  const sections = useMemo(() => (p ? renderDescription(p) : []), [p])
+
+  const related = useMemo(() => {
+    if (!p) return []
+    const rel: Product[] = products.filter((x) => x.id !== p.id && x.category === p.category)
+    if (rel.length < 4) {
+      products.forEach((x) => {
+        if (x.id === p.id || rel.includes(x) || rel.length >= 4) return
+        if (x.brand === p.brand) rel.push(x)
+      })
+    }
+    if (rel.length < 4) {
+      products.forEach((x) => {
+        if (x.id === p.id || rel.includes(x) || rel.length >= 4) return
+        if (x.inStock) rel.push(x)
+      })
+    }
+    return rel.slice(0, 4)
+  }, [p, products])
+
+  useEffect(() => {
+    if (!relatedRef.current || !related.length) return
+    observeNew(Array.from(relatedRef.current.querySelectorAll('.card')))
+  }, [related])
 
   if (!p) return null
-  const sym = config.currencySymbol || '৳'
+
+  const si = stockInfo(p)
+  const out = si.cls === 'out'
   const price = Number(p.displayPrice ?? p.offerPrice ?? p.oldPrice ?? 0) || 0
   const old = Number(p.oldPrice) || 0
   const pct = discountPct(p)
-  const out = p.inStock === false || (typeof p.stockQty === 'number' && p.stockQty <= 0)
+  const img = getImg(p)
 
-  const related = products.filter((x) => x.category === p.category && x.id !== p.id).slice(0, 4)
+  const stockText = out
+    ? 'Out of Stock'
+    : `${si.label}${Number(p.stockQty) > 0 ? ` (${Number(p.stockQty)} units)` : ''}`
+  const stockIcon = out ? 'fa-solid fa-circle-xmark' : 'fa-solid fa-circle-check'
+  const stockColor = out ? 'var(--red)' : si.cls === 'low' ? 'var(--amber)' : 'var(--green)'
 
-  const parseDesc = () => {
-    const text = String(p.description ?? '')
-    if (!text.trim()) return null
-    const lines = text.split('. ').join('.\n').split('\n').map((s) => s.trim()).filter(Boolean)
-    const sections: Array<{ type: string; label?: string; items: string[] }> = []
-    let current: { type: string; label?: string; items: string[] } | null = null
+  const ppQty = (d: number) => setQty((q) => Math.max(1, Math.min(q + d, maxQty(p))))
 
-    lines.forEach((raw) => {
-      const stripped = raw.replace(/^[-*•]\s*/, '')
-      const heading = matchHeading(raw)
-      if (heading) {
-        current = { type: heading, items: [] }
-        sections.push(current)
-        // the heading may carry a leading label like "How to use:"
-        const label = raw.split(/[:]/)[0]
-        if (heading === 'bullets') current.label = label.includes(' ') ? label : undefined
-        // text after the first colon on the heading line belongs to the body
-        const rest = raw.split(/:(.+)/)[1]
-        if (rest && rest.trim()) current.items.push(rest.trim())
-        return
-      }
-      if (!current) {
-        current = { type: 'para', items: [] }
-        sections.push(current)
-      }
-      current.items.push(stripped)
-    })
-    return sections.filter((s) => s.items.length)
-      .map((s) => {
-        if (s.type === 'bullets' || s.items.length > 1) return { ...s, items: s.items }
-        return { ...s, items: s.items }
-      })
+  const add = () => {
+    flyToCart(addRef.current)
+    addToCart(p.id, qty)
   }
-
-  const sections = parseDesc()
 
   const goCategory = () => {
     setActiveCat(p.category || 'All')
     closeProduct()
   }
 
-  const add = () => { addToCart(p.id, qty); closeProduct() }
+  const fallbackDesc =
+    `${p.brand} ${p.title}${p.size ? ` — ${p.size}` : ''}. Message us on WhatsApp for full product details.`
 
   return (
-    <section className="mx-auto max-w-[1200px] px-4 pt-28 pb-14 md:px-8" aria-live="polite" id="product-view">
-      <button type="button" onClick={closeProduct}
-        className="inline-flex items-center gap-2 text-sm font-bold text-slate transition-colors hover:text-rose-d">
-        <ArrowLeft size={15} /> Back to Shop
-      </button>
+    <section id="product-page" aria-live="polite">
+      <div className="pp-inner">
+        <button className="pp-back" type="button" onClick={closeProduct}>
+          <i className="fa-solid fa-arrow-left" /> Back to Shop
+        </button>
 
-      {/* Breadcrumb */}
-      <nav className="mt-4 flex flex-wrap items-center gap-1.5 text-xs text-slate" aria-label="Breadcrumb">
-        <span className="cursor-pointer font-bold hover:text-rose-d" onClick={closeProduct}>Shop</span>
-        <ChevronRight size={11} />
-        <span className="cursor-pointer font-bold hover:text-rose-d" onClick={goCategory}>{p.category || 'All'}</span>
-        <ChevronRight size={11} />
-        <strong className="text-ink">{p.title}</strong>
-      </nav>
+        <nav className="pp-crumb" aria-label="Breadcrumb">
+          <span className="pp-crumb-link" role="button" tabIndex={0} onClick={closeProduct}>Shop</span>
+          <i className="fa-solid fa-angle-right" />
+          <span className="pp-crumb-link" role="button" tabIndex={0} onClick={goCategory}>{p.category ?? 'All'}</span>
+          <i className="fa-solid fa-angle-right" />
+          <strong>{trunc(p.title, 40)}</strong>
+        </nav>
 
-      <div className="mt-6 grid gap-8 md:grid-cols-2">
-        <div className="relative">
-          {pct > 0 && (
-            <span className="absolute left-4 top-4 z-10 rounded-full bg-rose px-3 py-1 text-xs font-extrabold text-white shadow">
-              −{pct}%
-            </span>
-          )}
-          <img src={getImg(p)} alt={p.title} className={cn('aspect-[4/5] w-full rounded-[var(--radius-r-xl)] object-cover shadow-lg', out && 'opacity-60 saturate-50')} />
+        <div className="pp-grid">
+          <div className="pp-media">
+            <span className={pct > 0 ? 'pp-disc' : 'pp-disc hidden'} id="pp-disc">-{pct}%</span>
+            <img id="pp-img" src={img} alt={p.title} onError={(e) => { (e.currentTarget as HTMLImageElement).onerror = null; e.currentTarget.src = DEFAULT_IMG }} />
+          </div>
+
+          <div className="pp-info">
+            <p className="pp-brand" id="pp-brand">{p.brand}{p.category ? ` · ${p.category}` : ''}</p>
+            <h1 className="pp-name" id="pp-name">{p.title}</h1>
+            <p className="pp-sku" id="pp-sku">{p.sku ? `SKU: ${p.sku}` : ''}</p>
+            <div className="pp-price-row">
+              <span className="pp-price" id="pp-price">{fmt(price)}</span>
+              <span className="pp-price-old" id="pp-old">{p.hasDiscount ? fmt(old) : ''}</span>
+            </div>
+
+            <p className={`pp-stock ${si.cls}`} id="pp-stock">
+              <i className={stockIcon} style={{ color: stockColor, marginRight: 6 }} /> {stockText}
+            </p>
+
+            <div className="pp-actions">
+              <div className="qty-ctrl pp-qty-ctrl">
+                <button type="button" aria-label="Decrease quantity" onClick={() => ppQty(-1)}>−</button>
+                <span id="pp-qty">{qty}</span>
+                <button type="button" aria-label="Increase quantity" onClick={() => ppQty(1)}>+</button>
+              </div>
+              <button className="pp-add" id="pp-add" type="button" onClick={add} disabled={out} ref={addRef}>
+                <i className="fa fa-bag-shopping" /> Add to Bag
+              </button>
+            </div>
+
+            <div className="pp-short" id="pp-short" />
+
+            <table className="pp-meta">
+              <tbody>
+                <tr><td>Brand</td><td id="pp-meta-brand">{p.brand || '—'}</td></tr>
+                <tr><td>Category</td><td id="pp-meta-cat">{p.category || '—'}</td></tr>
+                <tr><td>Size</td><td id="pp-meta-size">{p.size || '—'}</td></tr>
+                <tr><td>SKU</td><td id="pp-meta-sku">{p.sku || '—'}</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <div>
-          {p.brand && <p className="text-xs font-bold uppercase tracking-widest text-gold">{p.brand}</p>}
-          <h1 className="mt-2 text-3xl font-extrabold text-ink">{p.title}</h1>
-          {p.sku && <p className="mt-1 text-xs text-slate">SKU: {p.sku}</p>}
-
-          <div className="mt-4 flex items-baseline gap-3">
-            <span className={cn('text-2xl font-extrabold', old > price ? 'text-rose-d' : 'text-ink')}>{fmt(price, sym)}</span>
-            {old > price && <span className="text-base text-slate line-through">{fmt(old, sym)}</span>}
+        <div className="pp-desc-wrap" id="pp-desc-wrap">
+          <h2 className="section-title pp-h2">Product <span>Details</span></h2>
+          <div className="pp-desc" id="pp-desc">
+            {sections.length === 0 && <p className="pd-para">{esc(fallbackDesc)}</p>}
+            {sections.map((s, i) => <div key={i}>{s.body}</div>)}
           </div>
+        </div>
 
-          <p className={cn('mt-2 text-sm font-bold', out ? 'text-rose' : 'text-green')}>
-            {out ? 'Currently out of stock' : p.stockQty && p.stockQty <= 8 ? `Only ${p.stockQty} left in stock` : 'In stock'}
-          </p>
-
-          <div className="mt-6 flex max-w-md items-center gap-3">
-            <div className="flex items-center gap-1 rounded-full border border-bdr bg-white">
-              <button type="button" aria-label="Decrease quantity" onClick={() => setQty((q) => Math.max(1, q - 1))}
-                className="flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-rose-s hover:text-rose-d">
-                <Minus size={15} />
-              </button>
-              <span className="w-8 text-center text-base font-bold">{qty}</span>
-              <button type="button" aria-label="Increase quantity" onClick={() => setQty((q) => q + 1)}
-                className="flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-rose-s hover:text-rose-d">
-                <Plus size={15} />
-              </button>
-            </div>
-            <button type="button" onClick={add} disabled={out}
-              className="flex flex-1 items-center justify-center gap-2 rounded-full bg-rose-d py-3.5 text-sm font-bold text-white shadow-lg transition-colors hover:bg-rose disabled:cursor-not-allowed disabled:opacity-40">
-              <ShoppingBag size={15} /> {out ? 'Sold Out' : 'Add to Bag'}
-            </button>
-          </div>
-
-          {/* Short desc */}
-          {sections && sections[0] && (
-            <div className="mt-6 rounded-2xl border border-bdr bg-white p-5 text-sm leading-relaxed text-slate">
-              {sections.filter((s) => s.type === 'para').slice(0, 1)[0]?.items.join(' ') || ''}
-            </div>
-          )}
-
-          <table className="mt-6 w-full max-w-md text-sm">
-            <tbody>
-              {[['Brand', p.brand || '—'], ['Category', p.category || '—'], ['Size', p.size || '—'], ['SKU', p.sku || '—']].map(([k, v]) => (
-                <tr key={k} className="border-b border-bdr last:border-0">
-                  <td className="py-2.5 font-bold text-slate">{k}</td>
-                  <td className="py-2.5 text-right font-semibold text-ink">{v}</td>
-                </tr>
+        {related.length > 0 && (
+          <div className="pp-related-wrap" id="pp-related-wrap">
+            <h2 className="section-title pp-h2">You May Also <span>Like</span></h2>
+            <div id="pp-related" ref={relatedRef}>
+              {related.map((r, i) => (
+                <ProductCard key={r.id} p={r} delay={Math.min(i, 4) * 55} />
               ))}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* Detail sections */}
-      {sections && sections.length > 0 && (
-        <div className="mt-14">
-          <h2 className="text-2xl font-extrabold text-ink">
-            Product <span className="display-serif italic text-rose-d">Details</span>
-          </h2>
-          <div className="mt-5 space-y-5">
-            {sections.filter((s) => s.type !== 'para' || s.items.length).map((s, i) => (
-              <div key={i} className="rounded-[var(--radius-r-lg)] border border-bdr bg-white p-6">
-                {s.label && <h3 className="text-sm font-extrabold uppercase tracking-wider text-rose-d">{s.label}</h3>}
-                {s.type === 'bullets' ? (
-                  <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate">
-                    {s.items.map((it, j) => <li key={j} className="flex gap-2"><span className="text-rose-d">•</span>{it}</li>)}
-                  </ul>
-                ) : (
-                  <p className="mt-2 text-sm leading-relaxed text-slate">{s.items.join(' ')}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Related */}
-      {related.length > 0 && (
-        <div className="mt-14">
-          <h2 className="text-2xl font-extrabold text-ink">
-            You May Also <span className="display-serif italic text-rose-d">Like</span>
-          </h2>
-          <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {related.map((r) => (
-              <div key={r.id} onClick={() => { setQty(1); openProduct(r.id) }}
-                className="card-hover cursor-pointer rounded-[var(--radius-r-xl)] border border-bdr bg-white p-3">
-                <img src={getImg(r)} alt={r.title} loading="lazy" className="aspect-[4/5] w-full rounded-[var(--radius-r-lg)] object-cover" />
-                <p className="mt-2 truncate text-xs font-bold text-ink">{r.title}</p>
-                <p className="mt-0.5 text-sm font-extrabold text-rose-d">{fmt(Number(r.displayPrice ?? r.offerPrice ?? 0), sym)}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </section>
   )
 }

@@ -1,62 +1,103 @@
-import { useEffect } from 'react'
-import { Tag, ShoppingBag } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useShop } from '../store/shop'
+import { DEFAULT_IMG } from '../lib/format'
+import { REDUCED_MOTION } from '../utils/feedback'
 
-const FALLBACK_OFFERS = [{
-  eyebrow: 'Limited Time',
-  title: 'Up to 30% Off',
-  title2: 'Beauty of Joseon',
-  description: 'Stock up on the Relief Sun and Glow Serum — our most-loved rice and honey essentials, now at their lowest price this month.',
-  imageUrl: 'https://aubeautybazaar.com/cdn/shop/files/beauty-of-joseon-relief-sun-10ml-3896945.png?v=1771417989',
-}]
+/* "Up to *30% Off*" → highlighted span; a newline in the cell → <br>. */
+function offerTitleHTML(t: string): string {
+  return String(t ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+    .replace(/\*([^*]+)\*/g, '<span>$1</span>')
+    .replace(/\r?\n/g, '<br>')
+}
 
 export function Offers() {
-  const { offers } = useShop()
-  const list = offers && offers.length ? offers : FALLBACK_OFFERS
+  const { offers, openProduct, setActiveCat } = useShop()
+  const [idx, setIdx] = useState(0)
+  const timerRef = useRef<number | null>(null)
+
+  const list = useMemo(() => (Array.isArray(offers) ? offers : []), [offers])
+  const total = list.length
 
   useEffect(() => {
-    const t = window.setInterval(() => {
-      // placeholder slider tick — data-driven offers render statically for now
-    }, 6000)
-    return () => window.clearInterval(t)
-  }, [])
+    setIdx(0)
+    return () => { if (timerRef.current) window.clearInterval(timerRef.current) }
+  }, [total])
 
-  const scrollToShop = () => document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' })
+  useEffect(() => {
+    if (total < 2 || REDUCED_MOTION) return
+    timerRef.current = window.setInterval(() => setIdx((prev) => (prev + 1) % total), 4500)
+    return () => { if (timerRef.current) window.clearInterval(timerRef.current) }
+  }, [total])
+
+  const goTo = (i: number) => {
+    setIdx(i)
+    if (timerRef.current) window.clearInterval(timerRef.current)
+    if (total > 1 && !REDUCED_MOTION) {
+      timerRef.current = window.setInterval(() => setIdx((prev) => (prev + 1) % total), 4500)
+    }
+  }
+
+  /** Vanilla: a bare-number Link jumps to that product; otherwise it is a
+      category filter that lands the shopper back at the collection. */
+  const slideAction = (o: (typeof list)[number]) => {
+    const link = String(o.link ?? '').trim()
+    if (/^\d+$/.test(link) && Number(link) !== Infinity) { openProduct(Number(link)); return }
+    if (o.category) setActiveCat(String(o.category))
+    const shop = document.getElementById('shop')
+    if (shop) shop.scrollIntoView({ behavior: REDUCED_MOTION ? 'auto' : 'smooth' })
+  }
+
+  if (total === 0) return null
+
+  const btn = (o: (typeof list)[number]) => String(o.buttonText ?? '').trim() || 'Shop Now'
 
   return (
-    <section className="relative overflow-hidden" id="offers">
-      <div aria-hidden="true" className="pointer-events-none absolute -left-20 top-1/2 h-72 w-72 -translate-y-1/2 rounded-full bg-gold-l blur-[90px]" />
-      <div className="relative mx-auto max-w-[1200px] px-4 py-12 md:px-8 md:py-16">
-        <div className="panel grid gap-6 overflow-hidden p-1 md:grid-cols-[1.2fr_1fr]">
-          {list.slice(0, 1).map((o, i) => {
-            const t = String(o.title ?? '').split('|')
-            const title = t[0] || 'Special Offer'
-            const title2 = t[1] || ''
-            return (
-              <div key={i} className="grid gap-4 rounded-[calc(var(--radius-r-lg)-4px)] bg-gradient-to-br from-rose-s via-gold-l to-white p-8 md:grid-cols-2 md:items-center md:p-10">
-                <div>
-                  <p className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-wider text-rose-d">
-                    <Tag size={12} /> {String(o.eyebrow ?? 'Limited Time')}
-                  </p>
-                  <h2 className="mt-4 text-3xl font-extrabold leading-tight text-ink md:text-4xl">
-                    {title}
-                    {title2 && <><br /><span className="display-serif italic text-rose-d">{title2}</span></>}
-                  </h2>
-                  <p className="mt-3 text-sm leading-relaxed text-slate">{String(o.description ?? '')}</p>
-                  <button type="button" onClick={scrollToShop}
-                    className="mt-6 inline-flex items-center gap-2 rounded-full bg-rose-d px-5 py-2.5 text-sm font-bold text-white shadow-md transition-colors hover:bg-rose">
-                    <ShoppingBag size={14} /> Shop the Offer
-                  </button>
+    <section className="offer-section" id="offers">
+      <div className="offer-petal offer-petal-1">
+      </div>
+      <div className="offer-petal offer-petal-2">
+      </div>
+      <div className="offer-petal offer-petal-3">
+      </div>
+
+      <div className="offer-slider">
+        <div className="offer-viewport">
+          <div className="offer-track" id="offerTrack" style={{ transform: `translateX(-${idx * 100}%)` }}>
+            {list.map((o, i) => {
+              const icon = String(o.icon ?? '').trim() || 'fa-solid fa-tag'
+              const img = o.imageUrl && String(o.imageUrl).indexOf('http') === 0 ? o.imageUrl : DEFAULT_IMG
+              return (
+                <div key={i} className={i === idx ? 'offer-slide is-active' : 'offer-slide'}>
+                  <div className="offer-copy">
+                    {o.eyebrow && <p className="offer-eyebrow"><i className={icon} /> {o.eyebrow}</p>}
+                    <h2 className="offer-title" dangerouslySetInnerHTML={{ __html: offerTitleHTML(o.title ?? '') }} />
+                    {o.description && <p className="offer-desc">{o.description}</p>}
+                    <a href="#shop" className="offer-btn" onClick={(e) => { e.preventDefault(); slideAction(o) }}>
+                      <i className="fa-solid fa-bag-shopping" /> {btn(o)}
+                    </a>
+                  </div>
+                  <div className="offer-image">
+                    <img src={img} alt={o.title ?? 'Offer'} loading="lazy" />
+                  </div>
                 </div>
-                <div className="flex items-center justify-center">
-                  {String(o.imageUrl ?? '').startsWith('http') ? (
-                    <img src={String(o.imageUrl)} alt="" loading="lazy" className="animate-float-soft h-52 w-52 rounded-2xl object-cover shadow-lg" />
-                  ) : null}
-                </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
+
+        {total > 1 && (
+          <div className="offer-dots" id="offerDots">
+            {list.map((_, i) => (
+              <button
+                key={i}
+                className={i === idx ? 'offer-dot is-active' : 'offer-dot'}
+                aria-label={`Show offer ${i + 1}`}
+                onClick={() => goTo(i)}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )

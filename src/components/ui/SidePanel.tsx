@@ -1,13 +1,9 @@
-import { X, Search } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useShop } from '../../store/shop'
-import { cn } from '../../utils/cn'
-import { getLenis } from '../../utils/lenis'
+import { syncOverlayLock } from '../../utils/overlay'
 
 export function SidePanel() {
-  const { panelMode, closePanel, products, setActiveCat, search, setSearch, activeCat } = useShop()
-  const [q, setQ] = useState('')
-
+  const { panelMode, closePanel, products, search, setSearch, activeCat, setActiveCat } = useShop()
   const isBrand = panelMode === 'brand'
 
   const options = useMemo(() => {
@@ -18,72 +14,51 @@ export function SidePanel() {
     }
     const m = new Map<string, number>()
     products.forEach((p) => { if (p.category) m.set(p.category, (m.get(p.category) ?? 0) + 1) })
-    return [{ name: 'All' as const }, ...Array.from(m.entries()).map(([name, count]) => ({ name, count }))] as Array<{ name: string; count?: number }>
+    return [
+      { name: 'All', count: products.length },
+      ...Array.from(m.entries()).map(([name, count]) => ({ name, count })),
+    ]
   }, [products, isBrand])
 
   useEffect(() => {
-    if (panelMode) getLenis()?.stop()
-    else getLenis()?.start()
+    syncOverlayLock()
   }, [panelMode])
 
   if (!panelMode) return null
 
-  const filtered = options.filter((o) => o.name.toLowerCase().includes(q.toLowerCase()))
-
   const pick = (name: string) => {
-    if (isBrand) {
-      setSearch(name)
-    } else {
-      setActiveCat(name)
-    }
+    if (isBrand) setSearch(name === 'All' ? '' : name)
+    else setActiveCat(name)
     closePanel()
   }
 
-  const title = isBrand ? 'Brands' : 'Categories'
+  const isOn = (name: string) => (isBrand ? (name === 'All' ? search === '' : search === name) : activeCat === name)
 
   return (
     <>
-      <div className="fixed inset-0 z-[60] bg-black/45" onClick={closePanel} />
-      <div className="dd-in fixed right-0 top-0 z-[70] flex h-full w-full max-w-sm flex-col rounded-l-3xl bg-chalk shadow-2xl">
-        <div className="flex items-center justify-between border-b border-bdr px-5 py-4">
-          <h3 className="text-lg font-bold text-ink">{title}</h3>
-          <button type="button" aria-label="Close panel" onClick={closePanel}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate transition-colors hover:bg-rose-s hover:text-rose-d">
-            <X size={18} />
+      <div id="sp-veil" className="on" onClick={closePanel} />
+      <aside id="side-panel" className="on" aria-label="Filters">
+        <div className="sp-head">
+          <h3 id="sp-title">{isBrand ? 'Brands' : 'Categories'}</h3>
+          <button className="icon-btn" type="button" aria-label="Close panel" onClick={closePanel}>
+            <i className="fa fa-xmark" />
           </button>
         </div>
-        <div className="space-y-4 px-5 py-4" data-lenis-prevent>
-          <div className="relative">
-            <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate" />
-            <input
-              type="search"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder={`Search ${title.toLowerCase()}…`}
-              className="w-full rounded-full border border-bdr bg-white py-2.5 pl-10 pr-4 text-sm focus:border-rose-m"
-            />
-          </div>
-          <div className="space-y-2">
-            {filtered.map((o) => (
-              <button
-                type="button"
-                key={o.name}
-                onClick={() => pick(o.name)}
-                className={cn(
-                  'flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm transition-colors',
-                  (isBrand ? search === o.name : activeCat === o.name)
-                    ? 'bg-rose-s font-bold text-rose-d'
-                    : 'text-ink hover:bg-rose-s/60 hover:text-rose-d'
-                )}
-              >
-                <span>{o.name}</span>
-                {typeof o.count === 'number' && <span className="text-xs text-slate">{o.count}</span>}
-              </button>
-            ))}
-            {filtered.length === 0 && <p className="px-2 py-6 text-center text-sm text-slate">No matches found.</p>}
-          </div>
+        <div className="sp-body" id="sp-body">
+          {options.map((o) => (
+            <button
+              key={o.name}
+              type="button"
+              className={isOn(o.name) ? 'sp-pill on' : 'sp-pill'}
+              onClick={() => pick(o.name)}
+            >
+              {o.name}
+              {typeof o.count === 'number' && o.name !== 'All' && ` (${o.count})`}
+            </button>
+          ))}
+          {options.length === 0 && <p className="sp-empty">No {isBrand ? 'brands' : 'categories'} yet.</p>}
         </div>
-      </div>
+      </aside>
     </>
   )
 }

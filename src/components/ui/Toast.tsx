@@ -1,21 +1,18 @@
-import { CheckCircle2, XCircle } from 'lucide-react'
 import { useShop } from '../../store/shop'
-import { cn } from '../../utils/cn'
 
 export function Toast() {
   const { toast } = useShop()
   if (!toast) return null
   return (
     <div
+      id="toast"
+      className="on"
       role="status"
       aria-live="polite"
-      className={cn(
-        'toast-in fixed bottom-20 left-1/2 z-[120] flex -translate-x-1/2 items-center gap-2.5 rounded-full px-5 py-3 text-sm font-semibold text-white shadow-xl md:bottom-8',
-        toast.err ? 'bg-red' : 'bg-ink'
-      )}
+      style={{ background: toast.err ? 'rgba(185,74,72,.95)' : 'rgba(43,30,20,.95)' }}
     >
-      {toast.err ? <XCircle size={16} /> : <CheckCircle2 size={16} className="text-emerald-400" />}
-      {toast.msg}
+      <i className={toast.err ? 'fa fa-triangle-exclamation' : 'fa fa-check-circle'} id="toast-ic" />
+      <span id="toast-msg">{toast.msg}</span>
     </div>
   )
 }

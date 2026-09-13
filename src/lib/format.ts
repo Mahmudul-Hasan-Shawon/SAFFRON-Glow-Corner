@@ -13,6 +13,9 @@ const IMGS: Record<string, string> = {
 
 export const CURRENCY_SYMBOL = '৳'
 
+/* Fallback artwork for anything without a usable image URL. */
+export const DEFAULT_IMG = IMGS.d
+
 export function money(n: number | null | undefined): string {
   const v = Math.round(Number(n) || 0)
   return v.toLocaleString('en-US')

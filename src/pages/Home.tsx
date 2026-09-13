@@ -4,13 +4,16 @@ import { ShopGrid } from '../sections/ShopGrid'
 import { ProductView } from '../sections/ProductView'
 import { useShop } from '../store/shop'
 
-export function Home() {
+interface PageProps { onNavigate: (href: string) => void }
+
+export function Home(_props: PageProps) {
   const { productId } = useShop()
+  if (productId) return <ProductView />
   return (
-    <div>
+    <>
       <Hero />
       <Offers />
-      {productId ? <ProductView /> : <ShopGrid />}
-    </div>
+      <ShopGrid />
+    </>
   )
 }

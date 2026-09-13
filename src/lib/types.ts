@@ -12,6 +12,7 @@ export interface Product {
   hasDiscount?: boolean
   inStock?: boolean
   stockQty?: number
+  stockStatus?: string
   imageUrl?: string
   description?: string
 }
@@ -27,6 +28,9 @@ export interface SiteConfig {
   whatsappNumber?: string
   bKashNumber?: string
   nagadNumber?: string
+  bKashAccount?: string
+  bkashAccount?: string
+  nagadAccount?: string
   offers?: Array<Record<string, unknown>>
 }
 
@@ -57,18 +61,29 @@ export interface OrderResult {
 }
 
 export interface TrackResult {
+  found?: boolean
+  error?: string
   status?: string
   orderID?: string
-  orderDate?: string
+  orderNumber?: string
+  date?: string
+  payment?: string
+  trackingCode?: string
+  shippingStatus?: string
+  fullName?: string
+  contact?: string
+  address?: string
+  delivery?: string
+  items?: string
+  subtotal?: string | number
+  deliveryCharge?: string | number
+  total?: string | number
   customerName?: string
   contactNumber?: string
-  address?: string
   deliveryLocation?: string
   service?: string
   transaction?: string
   quantity?: string | number
-  total?: string | number
   products?: string
-  trackingCode?: string
   [key: string]: unknown
 }
