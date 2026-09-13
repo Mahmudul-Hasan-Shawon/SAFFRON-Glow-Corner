@@ -67,13 +67,15 @@
                 <button class="clear-filter-btn" id="clear-filter-btn" onclick="clearFilter()"><i
                         class="fa fa-xmark"></i>Clear Filter</button>
             </div>
-            <div class="nav-actions">
+            <nav class="nav-links" aria-label="Primary">
                 <a href="about.html" class="nav-page-link">About</a>
                 <a href="gallery.html" class="nav-page-link">Gallery</a>
                 <a href="faq.html" class="nav-page-link">FAQ</a>
                 <a href="contact.html" class="nav-page-link">Contact</a>
+            </nav>
+            <div class="nav-actions">
                 <button class="nav-track-btn" onclick="openTrack()"><i
-                        class="fa-solid fa-truck-fast"></i><span>TrackOrder</span></button>
+                        class="fa-solid fa-truck-fast"></i><span>Track Order</span></button>
                 <button class="nav-icon-btn" id="cart-btn" onclick="toggleCart()" title="Cart" aria-label="Open cart">
                     <i class="fa fa-bag-shopping"></i>
                     <span class="cart-count hidden" id="cart-cnt">0</span>
@@ -285,7 +287,15 @@
     <div class="page" id="shop">
         <div class="section-head reveal">
             <h2 class="section-title">Our <span>Collection</span></h2>
-            <span class="section-count" id="prod-count"></span>
+            <div class="shop-tools">
+                <div class="cat-dd" id="cat-dd">
+                    <button class="cat-dd-btn" id="cat-dd-btn" type="button" aria-haspopup="listbox"
+                        aria-expanded="false" onclick="toggleCatDD(event)"><span id="cat-dd-label">All
+                            Categories</span><i class="fa-solid fa-chevron-down"></i></button>
+                    <div class="cat-dd-menu hidden" id="cat-dd-menu" role="listbox" aria-label="Filter by category"></div>
+                </div>
+                <span class="section-count" id="prod-count"></span>
+            </div>
         </div>
         <div id="loading-state" class="loading-box hidden">
             <div class="spin"></div>

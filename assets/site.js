@@ -425,6 +425,8 @@ function buildPills() {
     });
     $("cat-pills").innerHTML = h;
 
+    buildCatDD();
+
     var fh = "";
     cats.slice(1, 7).forEach(function (c) {
         fh += '<li><a href="index.html#shop" onclick="selectCategory(\'' + jsStr(c) + '\');return false;">' + esc(c) + '</a></li>';
@@ -432,12 +434,61 @@ function buildPills() {
     if (fh && $("footer-cats")) $("footer-cats").innerHTML = fh;
 }
 
+function buildCatDD() {
+    if (!$("cat-dd-menu")) return;
+    var cats = ["All"], seen = {};
+    ALL.forEach(function (p) { if (p.category && !seen[p.category]) { cats.push(p.category); seen[p.category] = 1; } });
+    var h = "";
+    cats.forEach(function (c) {
+        var n = c === "All" ? ALL.length : ALL.filter(function (p) { return p.category === c; }).length;
+        h += '<button type="button" class="cat-dd-opt' + (c === "All" ? " on" : "") + '" data-cat="' + esc(c) +
+            '" onclick="setCatDD(\'' + jsStr(c) + '\')"><span>' + esc(c) + '</span><span class="cat-dd-count">' + n +
+            '</span></button>';
+    });
+    $("cat-dd-menu").innerHTML = h;
+}
+
+function syncCatDD() {
+    if (!$("cat-dd-menu")) return;
+    document.querySelectorAll(".cat-dd-opt").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-cat") === ACTIVE_CAT); });
+    var lbl = $("cat-dd-label");
+    if (lbl) lbl.textContent = ACTIVE_CAT === "All" ? "All Categories" : ACTIVE_CAT;
+}
+
+function toggleCatDD(e) {
+    if (e && e.stopPropagation) e.stopPropagation();
+    var dd = $("cat-dd");
+    if (!dd) return;
+    var open = dd.classList.toggle("open");
+    var menu = $("cat-dd-menu");
+    if (menu) menu.classList.toggle("hidden", !open);
+    var btn = $("cat-dd-btn");
+    if (btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+function closeCatDD() {
+    var dd = $("cat-dd"), menu = $("cat-dd-menu"), btn = $("cat-dd-btn");
+    if (dd) dd.classList.remove("open");
+    if (menu) menu.classList.add("hidden");
+    if (btn) btn.setAttribute("aria-expanded", "false");
+}
+
+function setCatDD(cat) {
+    setCat(cat);
+    closeCatDD();
+}
+
+document.addEventListener("click", function (ee) {
+    if (!document.getElementById("cat-dd")) return;
+    if (!ee.target.closest("#cat-dd")) closeCatDD();
+});
+
 function setCat(cat) {
     if (PP_PROD) exitProductView(false);
     resetHomeHash();
     ACTIVE_CAT = cat;
     document.querySelectorAll(".pill").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-cat") === cat); });
-    applyFilters(); updateClearFilterBtn();
+    syncCatDD(); applyFilters(); updateClearFilterBtn();
 }
 /* Point the URL at a given route without leaving an extra history
    entry, so the bar reflects where the shopper is after leaving the
