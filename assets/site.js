@@ -253,6 +253,7 @@ document.addEventListener("DOMContentLoaded", function () {
     window.addEventListener("hashchange", handleRoute);
     if ($("product-grid")) loadData();
     if ($("gallery-grid")) initGallery();
+    if ($("nav-cat-dd-menu")) buildNavCatDD();
     document.addEventListener("keydown", function (e) {
         if (e.key !== "Escape") return;
         // Close only the topmost layer so Escape doesn't nuke everything.
@@ -426,12 +427,64 @@ function buildPills() {
     $("cat-pills").innerHTML = h;
 
     buildCatDD();
+    buildNavCatDD(cats);
 
     var fh = "";
     cats.slice(1, 7).forEach(function (c) {
         fh += '<li><a href="index.html#shop" onclick="selectCategory(\'' + jsStr(c) + '\');return false;">' + esc(c) + '</a></li>';
     });
     if (fh && $("footer-cats")) $("footer-cats").innerHTML = fh;
+}
+
+function buildNavCatDD(cats) {
+    var menu = $("nav-cat-dd-menu");
+    if (!menu) return;
+    var pool = ALL && ALL.length ? ALL : null;
+    if (!pool) {
+        try { var cached = JSON.parse(lsGet(SHOP_CACHE_KEY) || "null"); pool = (cached && Array.isArray(cached.products)) ? cached.products : null; }
+        catch (e) { pool = null; }
+    }
+    if (!cats) {
+        cats = ["All"]; var seen = {};
+        (pool || []).forEach(function (p) { if (p.category && !seen[p.category]) { cats.push(p.category); seen[p.category] = 1; } });
+    }
+    var src = pool || [];
+    var h = "";
+    cats.forEach(function (c) {
+        var n = c === "All" ? src.length : src.filter(function (p) { return p.category === c; }).length;
+        h += '<button type="button" class="cat-dd-opt' + (c === "All" ? " on" : "") + '" data-cat="' + esc(c) +
+            '" onclick="setNavCatDD(\'' + jsStr(c) + '\')"><span>' + esc(c) + '</span><span class="cat-dd-count">' + n +
+            '</span></button>';
+    });
+    menu.innerHTML = h;
+}
+
+function toggleNavCatDD(e) {
+    if (e && e.stopPropagation) e.stopPropagation();
+    var dd = $("nav-cat-dd");
+    if (!dd) return;
+    var open = dd.classList.toggle("open");
+    var menu = $("nav-cat-dd-menu");
+    if (menu) menu.classList.toggle("hidden", !open);
+    var btn = $("nav-cat-dd-btn");
+    if (btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+function closeNavCatDD() {
+    var dd = $("nav-cat-dd"), menu = $("nav-cat-dd-menu"), btn = $("nav-cat-dd-btn");
+    if (dd) dd.classList.remove("open");
+    if (menu) menu.classList.add("hidden");
+    if (btn) btn.setAttribute("aria-expanded", "false");
+}
+
+function setNavCatDD(cat) {
+    closeNavCatDD();
+    if (location.pathname.indexOf("index.html") === -1 && location.pathname !== "/" && location.pathname !== "") {
+        location.href = "index.html#shop";
+        return;
+    }
+    setCat(cat);
+    scrollToShop();
 }
 
 function buildCatDD() {
@@ -479,8 +532,8 @@ function setCatDD(cat) {
 }
 
 document.addEventListener("click", function (ee) {
-    if (!document.getElementById("cat-dd")) return;
-    if (!ee.target.closest("#cat-dd")) closeCatDD();
+    if (document.getElementById("cat-dd") && !ee.target.closest("#cat-dd")) closeCatDD();
+    if (document.getElementById("nav-cat-dd") && !ee.target.closest("#nav-cat-dd")) closeNavCatDD();
 });
 
 function setCat(cat) {

@@ -489,6 +489,61 @@ a:focus-visible,
     -webkit-backdrop-filter: blur(6px)
 }
 
+.nav-dd {
+    position: relative
+}
+
+.nav-dd-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--rose-d);
+    padding: 8px 14px;
+    border-radius: 99px;
+    background: linear-gradient(135deg, var(--rose-d), var(--rose));
+    color: #fff;
+    box-shadow: 0 6px 16px -8px rgba(184, 103, 79, .55);
+    transition: var(--tr)
+}
+
+.nav-dd-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px -8px rgba(184, 103, 79, .65)
+}
+
+.nav-dd-caret {
+    font-size: 10px;
+    transition: transform .3s var(--e-silk)
+}
+
+.nav-dd.open .nav-dd-caret {
+    transform: rotate(180deg)
+}
+
+.nav-dd-menu {
+    position: absolute;
+    top: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 250px;
+    max-height: 360px;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, .98);
+    border: 1px solid var(--bdr);
+    border-radius: 16px;
+    box-shadow: 0 20px 50px -18px rgba(60, 35, 20, .4);
+    padding: 8px;
+    z-index: 250;
+    animation: ddIn .3s var(--e-silk) both
+}
+
+.nav-dd-menu:not(.hidden) {
+    display: grid;
+    gap: 2px
+}
+
 .nav-page-link {
     position: relative;
     display: inline-flex;

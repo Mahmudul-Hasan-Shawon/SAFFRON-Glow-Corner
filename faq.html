@@ -54,6 +54,14 @@
             </a>
             <nav class="nav-links" aria-label="Primary">
                 <a href="index.html" class="nav-page-link">Home</a>
+                <div class="nav-dd" id="nav-cat-dd">
+                    <button class="nav-dd-btn" id="nav-cat-dd-btn" type="button" aria-haspopup="listbox"
+                        aria-expanded="false" onclick="toggleNavCatDD(event)"><i
+                            class="fa-solid fa-grip"></i>Categories<i
+                            class="fa-solid fa-chevron-down nav-dd-caret"></i></button>
+                    <div class="nav-dd-menu hidden" id="nav-cat-dd-menu" role="listbox"
+                        aria-label="Shop by category"></div>
+                </div>
                 <a href="about.html" class="nav-page-link">About</a>
                 <a href="gallery.html" class="nav-page-link">Gallery</a>
                 <a href="faq.html" class="nav-page-link is-active" aria-current="page">FAQ</a>
