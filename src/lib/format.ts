@@ -11,12 +11,12 @@ const IMGS: Record<string, string> = {
   bb: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=500&auto=format',
 }
 
-export const CURRENCY_SYMBOL = 'Tk'
+const CURRENCY_SYMBOL = 'Tk'
 
 /* Fallback artwork for anything without a usable image URL. */
 export const DEFAULT_IMG = IMGS.d
 
-export function money(n: number | null | undefined): string {
+function money(n: number | null | undefined): string {
   const v = Math.round(Number(n) || 0)
   return v.toLocaleString('en-US')
 }
@@ -60,10 +60,6 @@ export function esc(s: unknown): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
-}
-
-export function jsStr(s: string): string {
-  return String(s ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'")
 }
 
 export function trunc(s: unknown, n: number): string {

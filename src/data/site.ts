@@ -6,10 +6,6 @@ export const site = {
   whatsapp: 'https://wa.me/message/OOV6ZSFN26OPP1',
   hours: 'Sat–Thu: 10AM – 8PM',
   locations: ['Chungcheongbuk-do, South Korea', 'Dhaka, Bangladesh'],
-  social: [
-    { label: 'Instagram', href: 'https://www.instagram.com/glowsaffron7' },
-    { label: 'WhatsApp', href: 'https://wa.me/message/OOV6ZSFN26OPP1' },
-  ],
   credit: 'Powered by Shawon',
   creditHref: 'https://mhshan.pages.dev/',
   creditLogo: 'https://shawon7.pages.dev/assets/Logo/S.svg',

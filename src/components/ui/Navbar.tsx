@@ -127,11 +127,11 @@ export function Navbar({ activePath, onNavigate, onTrack }: NavbarProps) {
               if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); logoClick() }
             }}
           >
-            <span className="display-logo text-lg font-bold tracking-wide text-rose-d md:text-xl">SAFFRON<span className="text-gold">.</span></span>
+            <span className="display-logo text-rose-d">SAFFRON<span className="text-gold">.</span></span>
           </div>
         ) : (
           <a href="/" className="nav-logo" id="site-logo" onClick={(e) => { e.preventDefault(); onNavigate('/') }}>
-            <span className="display-logo text-lg font-bold tracking-wide text-rose-d md:text-xl">SAFFRON<span className="text-gold">.</span></span>
+            <span className="display-logo text-rose-d">SAFFRON<span className="text-gold">.</span></span>
           </a>
         )}
 
