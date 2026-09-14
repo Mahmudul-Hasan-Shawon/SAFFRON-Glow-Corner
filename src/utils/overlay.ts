@@ -2,7 +2,7 @@ import { getLenis } from './lenis'
 
 /* Panes that scroll inside an overlay keep native scrolling even while
    body is scroll-locked. Lenis checks data-lenis-prevent and bails out. */
-const LOCK_IDS = ['cart', 'side-panel', 'checkout-veil', 'success-veil', 'track-veil', 'inv-veil', 'lightbox', 'mbn-cat-page']
+const LOCK_IDS = ['cart', 'side-panel', 'checkout-veil', 'success-veil', 'inv-veil', 'lightbox', 'mbn-cat-page']
 
 /* Mirrors the vanilla syncOverlayLock(): any overlay carrying `.on`
    locks the page behind it and parks Lenis so nothing drifts. */

@@ -3,8 +3,8 @@ import { useShop } from '../../store/shop'
 import { syncOverlayLock } from '../../utils/overlay'
 import { confetti } from '../../utils/feedback'
 
-export function OrderSuccess() {
-  const { successOpen, closeSuccess, lastOrder, openTrack } = useShop()
+export function OrderSuccess({ onTrack }: { onTrack: (code?: string) => void }) {
+  const { successOpen, closeSuccess, lastOrder } = useShop()
   const fired = useRef(false)
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export function OrderSuccess() {
         </div>
 
         <button className="btn-track-order" type="button"
-          onClick={() => { closeSuccess(); openTrack(lastOrder?.trackingCode) }}>
+          onClick={() => { closeSuccess(); onTrack(lastOrder?.trackingCode) }}>
           <i className="fa fa-location-dot" /> Track My Order
         </button>
 

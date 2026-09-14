@@ -11,7 +11,6 @@ import { MobileBottomNav } from './components/ui/MobileBottomNav'
 import { CartDrawer } from './components/ui/CartDrawer'
 import { SidePanel } from './components/ui/SidePanel'
 import { Checkout } from './components/ui/Checkout'
-import { OrderTracking } from './components/ui/OrderTracking'
 import { OrderSuccess } from './components/ui/OrderSuccess'
 import { Invoice } from './components/ui/Invoice'
 import { Toast } from './components/ui/Toast'
@@ -21,6 +20,7 @@ import { Gallery } from './pages/Gallery'
 import { Faq } from './pages/Faq'
 import { Contact } from './pages/Contact'
 import { Brands } from './pages/Brands'
+import { Track } from './pages/Track'
 
 interface PageProps { onNavigate: (href: string) => void }
 
@@ -31,6 +31,7 @@ const routes: Record<string, (props: PageProps) => ReactElement> = {
   '/faq': Faq,
   '/contact': Contact,
   '/brands': Brands,
+  '/track': Track,
 }
 
 function norm(path: string) {
@@ -43,7 +44,7 @@ function Shell() {
   const shop = useShop()
   const {
     openTrack, openProduct, closeProduct, closePanel,
-    setCartOpen, closeSuccess, setInvoiceOpen, closeTrack, closeCheckout,
+    setCartOpen, closeSuccess, setInvoiceOpen, closeCheckout,
   } = shop
 
   const [path, setPath] = useState(() => norm(window.location.pathname))
@@ -145,7 +146,6 @@ function Shell() {
       }
       if (has('lightbox')) return
       if (has('inv-veil')) { setInvoiceOpen(false); return }
-      if (has('track-veil')) { closeTrack(); return }
       if (has('success-veil')) { closeSuccess(); return }
       if (has('checkout-veil')) { closeCheckout(); return }
       if (has('side-panel')) { closePanel(); return }
@@ -154,7 +154,7 @@ function Shell() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [closeTrack, closeSuccess, closeCheckout, closePanel, setCartOpen, setInvoiceOpen, productId, closeProduct])
+  }, [closeSuccess, closeCheckout, closePanel, setCartOpen, setInvoiceOpen, productId, closeProduct])
 
   useEffect(() => { initScrollFx() }, [])
 
@@ -190,6 +190,13 @@ function Shell() {
     }
   }, [path, closeProduct, scrollToTop])
 
+  /* Track Order opens as its own page (like About/Gallery); a code from the
+     order-success screen is kept in the store for the page to prefill. */
+  const goTrack = useCallback((code?: string) => {
+    openTrack(typeof code === 'string' ? code : '')
+    navigate('/track')
+  }, [openTrack, navigate])
+
   useEffect(() => {
     const onPop = (e: PopStateEvent) => {
       const nextPath = norm(window.location.pathname)
@@ -219,19 +226,18 @@ function Shell() {
         <div className="aura-blob aura-3" />
       </div>
 
-      <Navbar activePath={path} onNavigate={navigate} onTrack={openTrack} />
+      <Navbar activePath={path} onNavigate={navigate} onTrack={() => goTrack()} />
       <main key={pageKey}>
         <Page onNavigate={navigate} />
       </main>
-      <Footer onNavigate={navigate} onTrack={openTrack} />
+      <Footer onNavigate={navigate} onTrack={() => goTrack()} />
 
-      <MobileBottomNav activePath={path} onNavigate={navigate} onTrack={openTrack} />
+      <MobileBottomNav activePath={path} onNavigate={navigate} onTrack={() => goTrack()} />
 
       <CartDrawer />
       <SidePanel />
       <Checkout />
-      <OrderTracking />
-      <OrderSuccess />
+      <OrderSuccess onTrack={goTrack} />
       <Invoice />
       <Toast />
     </>

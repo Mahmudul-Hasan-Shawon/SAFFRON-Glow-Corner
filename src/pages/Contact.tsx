@@ -27,7 +27,7 @@ export function Contact({ onNavigate }: PageProps) {
     let failed = false
     try {
       const res = await fetch(
-        'https://script.google.com/macros/s/AKfycbxriqOAO51MW3ekmUhGZ6TWvEqgn9a7wYV6JxU5tvdkiu04VnLvlzRfi6B9JApXUXqLrg/exec',
+        'https://script.google.com/macros/s/AKfycbz5bW2F7pmkZA78S_bhrn6x9SEt_tPf7E6RKtx7b5xhVfb41eavlAymiri7O_bD_TMT7g/exec',
         { method: 'POST', body: JSON.stringify({ action: 'submitContact', ...form }) },
       )
       failed = !res.ok

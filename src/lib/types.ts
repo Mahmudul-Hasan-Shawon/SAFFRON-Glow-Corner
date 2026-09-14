@@ -75,6 +75,7 @@ export interface TrackResult {
   address?: string
   delivery?: string
   items?: string
+  quantities?: string
   subtotal?: string | number
   deliveryCharge?: string | number
   total?: string | number

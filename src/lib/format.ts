@@ -11,7 +11,7 @@ const IMGS: Record<string, string> = {
   bb: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=500&auto=format',
 }
 
-export const CURRENCY_SYMBOL = '৳'
+export const CURRENCY_SYMBOL = 'Tk'
 
 /* Fallback artwork for anything without a usable image URL. */
 export const DEFAULT_IMG = IMGS.d
@@ -22,7 +22,7 @@ export function money(n: number | null | undefined): string {
 }
 
 export function fmt(n: number | null | undefined, symbol: string = CURRENCY_SYMBOL): string {
-  return symbol + money(n)
+  return `${money(n)} ${symbol}`
 }
 
 export function getImg(p: Product): string {

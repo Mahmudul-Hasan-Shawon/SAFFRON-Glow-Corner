@@ -3,7 +3,7 @@
    overwrote the browser's global URL constructor for the whole
    page — a landmine for any library added later.
    ============================================================== */
-var API_URL = "https://script.google.com/macros/s/AKfycbxriqOAO51MW3ekmUhGZ6TWvEqgn9a7wYV6JxU5tvdkiu04VnLvlzRfi6B9JApXUXqLrg/exec";
+var API_URL = "https://script.google.com/macros/s/AKfycbz5bW2F7pmkZA78S_bhrn6x9SEt_tPf7E6RKtx7b5xhVfb41eavlAymiri7O_bD_TMT7g/exec";
 
 var ALL = [], FILTERED = [], CFG = { totalProducts: 13 },
     ACTIVE_CAT = "All", SEARCH = "", LAST_ORDER = null;
@@ -77,7 +77,7 @@ function money(n) {
     while (s.length > 3) { out = "," + s.slice(-3) + out; s = s.slice(0, -3); }
     return (neg ? "-" : "") + s + out;
 }
-function fmt(n) { var sym = CFG.currencySymbol || "\u09F3"; return sym + money(n); }
+function fmt(n) { return money(n) + " Tk"; }
 function $(i) { return document.getElementById(i); }
 function show(i) { $(i).classList.remove("hidden"); }
 function hide(i) { $(i).classList.add("hidden"); }
@@ -1369,14 +1369,83 @@ function renderTrackResult(d) {
     $("tr-delivery-info").innerHTML = "<strong>" + esc(d.fullName) + "</strong><br/>" + esc(d.contact) +
         "<br/>" + esc(d.address) + "<br/>" + esc(d.delivery);
 
-    var items = String(d.items || "").split(", ");
-    var iHtml = "";
-    items.forEach(function (item) { if (String(item).trim()) iHtml += "\u2022 " + esc(item) + "<br/>"; });
-    $("tr-items-list").innerHTML = iHtml || "\u2014";
+    // ── Items + totals ────────────────────────────────────────
+    // The sheet stores one line per cart entry ("1. Name - ৳749") plus the
+    // matching quantity string ("Q-1, Q-3"). Group by name + size + price so
+    // same-named products in different sizes (100ml vs 150ml) keep separate
+    // rows with their own qty, unit and subtotal. Figures are computed from
+    // the items + delivery zone (the stored subtotal/total columns are
+    // unreliable across both checkouts).
+    var items = String(d.items || "").split(",");
+    var dq = d.quantities || d["Qty by Product"] || d.qtyByProduct || d.quantitiesArray || "";
+    var qtys = String(dq).split(",");
+    function normName(s) { return String(s || "").trim().toLowerCase().replace(/\s+/g, ""); }
+    var prodByKey = {};
+    for (var pi = 0; pi < ALL.length; pi++) {
+        var pr = ALL[pi];
+        if (!pr || !pr.title) continue;
+        var pbase = Number(pr.displayPrice != null ? pr.displayPrice : pr.offerPrice) || 0;
+        var pk = normName(pr.title) + "|" + pbase;
+        if (!prodByKey[pk]) prodByKey[pk] = pr;
+    }
+    function trackLookup(name, orderPrice) {
+        var hit = prodByKey[normName(name) + "|" + orderPrice] || null;
+        if (!hit) {
+            for (var j = 0; j < ALL.length; j++) {
+                var prj = ALL[j];
+                if (prj && prj.title && normName(prj.title) === normName(name)) { hit = prj; break; }
+            }
+        }
+        if (!hit) return null;
+        var b = Number(hit.displayPrice != null ? hit.displayPrice : hit.offerPrice) || 0;
+        return { size: hit.size || "", base: b };
+    }
+    var order = [], keyIdx = {}, sub = 0, rows = "";
 
-    $("tr-sub").textContent = d.subtotal;
-    $("tr-del").textContent = d.deliveryCharge;
-    $("tr-tot").textContent = d.total;
+    items.forEach(function (item, i) {
+        if (!String(item).trim()) return;
+        var q = 1;
+        var qm = String(qtys[i] || "").trim().match(/Q?-?(\d+)/i) || String(qtys[i] || "").trim().match(/(\d+)/);
+        if (qm) q = parseInt(qm[1], 10);
+
+        var stripped = String(item).trim().replace(/^\d+\.\s*/, "");
+        var im = stripped.match(/^(.*?)\s*[-–—]\s*(?:[৳$]\s*)?(\d[\d.,]*)\s*(?:tk|bdt)?\s*$/i);
+        var nm, pr = 0;
+        if (im) { nm = im[1].trim(); pr = parseInt(im[2].replace(/,/g, ""), 10); }
+        else nm = stripped;
+        if (!nm) return;
+
+        sub += pr * q;
+        var hit = trackLookup(nm, pr);
+        var size = (hit && hit.size) ? hit.size.trim() : "";
+        var base = (hit && hit.base > 0) ? hit.base : pr;
+        var key = nm + "\u0001" + size + "\u0001" + pr;
+        var gi = keyIdx[key];
+        if (gi === undefined) {
+            gi = order.length;
+            keyIdx[key] = gi;
+            order.push({ name: nm, size: size, base: base || pr, qty: 0, sub: 0 });
+        }
+        var g = order[gi];
+        g.qty += q;
+        g.sub += pr * q;
+    });
+
+    order.forEach(function (g) {
+        rows += "<div style='display:flex;justify-content:space-between;gap:12px;align-items:baseline'>"
+            + "<span><strong>" + g.qty + "&times;</strong> " + esc(g.name)
+            + (g.size ? " <em style='font-style:normal;font-size:12px;opacity:.75'>" + esc(g.size) + "</em>" : "")
+            + "</span>"
+            + (g.base > 0 ? "<span style='color:#667085;margin-right:14px'>" + fmt(g.base) + "</span>" : "")
+            + "<strong>" + fmt(g.sub) + "</strong></div>";
+    });
+    $("tr-items-list").innerHTML = rows || "\u2014";
+
+    var del = getDelivery(d.delivery);
+    var tot = sub + del;
+    $("tr-sub").textContent = sub > 0 ? fmt(sub) : "\u2014";
+    $("tr-del").textContent = del > 0 ? fmt(del) : "\u2014";
+    $("tr-tot").textContent = tot > 0 ? fmt(tot) : "\u2014";
     $("track-result").classList.add("on");
 }
 

@@ -4,7 +4,7 @@ import {
 import {
   CART_KEY, loadShopData, fetchProductsRefresh, submitOrder,
 } from '../lib/api'
-import { getImg, maxQty, productPrice } from '../lib/format'
+import { getImg, maxQty, productPrice, fmt } from '../lib/format'
 import { bumpCartIcon } from '../utils/feedback'
 import type { Offer, OrderResult, Product, SiteConfig } from '../lib/types'
 
@@ -83,7 +83,6 @@ interface ShopContextValue {
   checkoutOpen: boolean
   openCheckout: () => void
   closeCheckout: () => void
-  trackOpen: boolean
   trackPrefill: string
   openTrack: (prefill?: string) => void
   closeTrack: () => void
@@ -122,7 +121,6 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const [cartOpen, setCartOpen] = useState(false)
   const [panelMode, setPanelMode] = useState<'brand' | 'category' | null>(null)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
-  const [trackOpen, setTrackOpen] = useState(false)
   const [trackPrefill, setTrackPrefill] = useState('')
   const [successOpen, setSuccessOpen] = useState(false)
   const [invoiceOpen, setInvoiceOpen] = useState(false)
@@ -257,9 +255,8 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const closeCheckout = useCallback(() => setCheckoutOpen(false), [])
   const openTrack = useCallback((prefill?: string) => {
     setTrackPrefill(typeof prefill === 'string' ? prefill : '')
-    setTrackOpen(true)
   }, [])
-  const closeTrack = useCallback(() => setTrackOpen(false), [])
+  const closeTrack = useCallback(() => setTrackPrefill(''), [])
   const closeSuccess = useCallback(() => setSuccessOpen(false), [])
 
   /* ── Order placement (mirrors the vanilla payload) ─────── */
@@ -294,14 +291,17 @@ export function ShopProvider({ children }: { children: ReactNode }) {
         services: payload.services,
         account_number: payload.account_number,
         transaction_id: payload.transaction_id,
-        subtotal: cart.map((i) => `${i.title} - ${i.offerPrice}`).join(', '),
+        subtotal: fmt(t.sub),
         subtotalNum: t.sub,
+        delivery_charge: fmt(t.del),
         deliveryNum: t.del,
+        total: fmt(t.tot),
         totalNum: t.tot,
         calcTotal: t.tot,
         products: cart.map((i, x) => `${x + 1}. ${i.title} - ${i.offerPrice}`).join(', '),
         quantities: cart.map((i) => `Q-${i.qty}`),
         quantitiesArray: qtyArr,
+        formattedData: cart.map((i) => i.qty).join(', '),
         totalItems,
         offerSubtotal: t.sub,
       }
@@ -349,7 +349,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     cartOpen, setCartOpen,
     panelMode, openPanel, closePanel,
     checkoutOpen, openCheckout, closeCheckout,
-    trackOpen, trackPrefill, openTrack, closeTrack,
+    trackPrefill, openTrack, closeTrack,
     successOpen, closeSuccess,
     invoiceOpen, setInvoiceOpen,
     lastOrder, placeOrder, toast, refresh,
@@ -361,7 +361,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     cartOpen, setCartOpen,
     panelMode, openPanel, closePanel,
     checkoutOpen, openCheckout, closeCheckout,
-    trackOpen, trackPrefill, openTrack, closeTrack,
+    trackPrefill, openTrack, closeTrack,
     successOpen, closeSuccess,
     invoiceOpen, setInvoiceOpen,
     lastOrder, placeOrder, toast, refresh,

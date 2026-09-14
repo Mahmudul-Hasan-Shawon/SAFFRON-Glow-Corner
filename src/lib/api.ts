@@ -8,7 +8,7 @@ import type { GalleryItem, Offer, OrderResult, Product, ShopData, SiteConfig, Tr
  * web apps cannot answer).
  */
 export const API_URL =
-  'https://script.google.com/macros/s/AKfycbxriqOAO51MW3ekmUhGZ6TWvEqgn9a7wYV6JxU5tvdkiu04VnLvlzRfi6B9JApXUXqLrg/exec'
+  'https://script.google.com/macros/s/AKfycbz5bW2F7pmkZA78S_bhrn6x9SEt_tPf7E6RKtx7b5xhVfb41eavlAymiri7O_bD_TMT7g/exec'
 
 export const SHOP_CACHE_KEY = 'sgc_shop_v1'
 export const GALLERY_CACHE_KEY = 'sgc_gallery_v1'
