@@ -1482,11 +1482,16 @@ main {
 /* ── Mobile ──────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .tr-page {
-        padding: 40px 14px 64px;
+        padding: 32px 14px 56px;
     }
 
     .tr-search {
         padding-top: 0;
+    }
+
+    .tr-search.compact {
+        gap: 14px;
+        padding-bottom: 22px;
     }
 
     .tr-search-title {
@@ -1496,10 +1501,11 @@ main {
     .tr-search-box {
         flex-wrap: wrap;
         padding: 10px;
+        border-radius: 16px;
     }
 
     .tr-search-box input {
-        flex: 1 1 calc(100% - 30px);
+        flex: 1 1 100%;
     }
 
     .tr-search-btn {
@@ -1507,17 +1513,41 @@ main {
         justify-content: center;
     }
 
+    .tr-err {
+        margin-top: 14px;
+    }
+
     .tr-cards {
         grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .tr-card {
+        padding: 17px 16px;
+        border-radius: 16px;
+    }
+
+    .tr-ct {
+        margin-bottom: 10px;
+    }
+
+    .tr-kv-row {
+        font-size: 12.5px;
+        padding: 7px 0;
     }
 
     .steps {
         display: flex;
+        justify-content: center;
         overflow-x: auto;
-        gap: 4px;
-        padding: 2px 0 12px;
+        gap: 6px;
+        padding: 2px 0 10px;
+        margin-bottom: 18px;
+        margin-inline: auto;
+        width: 100%;
         scrollbar-width: none;
         -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
     }
 
     .steps::-webkit-scrollbar {
@@ -1530,13 +1560,27 @@ main {
     }
 
     .step {
-        min-width: 64px;
+        min-width: 52px;
+        flex: none;
+        gap: 4px;
+        scroll-snap-align: start;
     }
 
     .step-dot {
-        width: 40px;
-        height: 40px;
-        font-size: 14px;
+        width: 26px;
+        height: 26px;
+        font-size: 10px;
+        border-width: 2px;
+    }
+
+    .step-lbl {
+        font-size: 8px;
+    }
+
+    .tr-cancelled {
+        margin-bottom: 20px;
+        font-size: 13px;
+        text-align: center;
     }
 
     .tr-items-list li {
@@ -1554,6 +1598,98 @@ main {
 
     .tr-item-sub {
         margin-left: 14px;
+    }
+
+    .tr-total-row.total span {
+        font-size: 15px;
+    }
+
+    .tr-grand {
+        font-size: 24px !important;
+    }
+}
+
+/* ── Small phones ───────────────────────────────────────── */
+@media (max-width: 480px) {
+    .tr-page {
+        padding: 24px 12px 48px;
+    }
+
+    .tr-search.compact {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .tr-search-box {
+        gap: 8px;
+    }
+
+    .tr-search-box input {
+        flex: 1 1 100%;
+        padding: 12px 2px;
+        font-size: 14px;
+    }
+
+    .tr-search-btn {
+        padding: 13px 18px;
+    }
+
+    .tr-err {
+        padding: 11px 14px;
+        font-size: 12.5px;
+    }
+
+    .tr-card {
+        padding: 15px 13px;
+    }
+
+    .tr-kv-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .tr-kv-row dd {
+        text-align: left;
+        width: 100%;
+    }
+
+    .tr-items-list li {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        column-gap: 8px;
+        row-gap: 3px;
+    }
+
+    .tr-item-qty {
+        grid-row: 1;
+        grid-column: 1;
+    }
+
+    .tr-item-name {
+        grid-row: 1;
+        grid-column: 2;
+    }
+
+    .tr-item-price {
+        grid-row: 2;
+        grid-column: 2;
+        justify-self: end;
+        font-size: 12px;
+    }
+
+    .tr-item-sub {
+        grid-row: 3;
+        grid-column: 2;
+        justify-self: end;
+        margin-left: 0;
+        min-width: 0;
+        font-size: 14px;
+    }
+
+    .tr-total-row {
+        font-size: 13px;
     }
 }
 

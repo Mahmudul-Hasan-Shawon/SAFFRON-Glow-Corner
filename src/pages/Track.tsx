@@ -212,13 +212,8 @@ export function Track({ onNavigate }: PageProps) {
 
       <div className="tr-page">
         <section className={`tr-search${res ? ' compact' : ''}`}>
-          <div className="tr-search-icon"><i className="fa fa-truck-fast" /></div>
-          <div className="tr-search-txt">
-            <h2 className="tr-search-title">Track Your Order</h2>
-            <p className="tr-p">Enter your Order ID or Tracking Code to follow your parcel from our shelf to your doorstep.</p>
-          </div>
+
           <div className="tr-search-box">
-            <i className="fa fa-magnifying-glass tr-search-ico" />
             <input
               type="text"
               id="track-inp"
